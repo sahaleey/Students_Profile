@@ -1,4 +1,3 @@
-// src/app/(dashboards)/usthad/achievements/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -55,7 +54,7 @@ export default function AchievementsPage() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      {/* LEFT COLUMN: MULTI-STEP WIZARD */}
+      {/* LEFT COLUMN: MULTI-STEP */}
       <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-emerald-100 overflow-hidden flex flex-col h-[600px]">
         {/* Step Tracker */}
         <div className="bg-emerald-50 p-4 border-b border-emerald-100">

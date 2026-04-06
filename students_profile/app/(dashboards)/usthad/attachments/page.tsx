@@ -1,4 +1,3 @@
-// src/app/(dashboards)/usthad/attachments/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -46,7 +45,7 @@ export default function AttachmentsPage() {
     },
   ]);
 
-  // 🔥 The Search Filter Logic
+  // Search Filter Logic
   const filteredStudents = STUDENT_DATA.map((group) => ({
     ...group,
     students: group.students.filter(
@@ -59,12 +58,12 @@ export default function AttachmentsPage() {
   const resetWizard = () => {
     setSelectedStudent(null);
     setStep(1);
-    setSearchTerm(""); // Clear search on reset
+    setSearchTerm("");
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      {/* LEFT COLUMN: MULTI-STEP WIZARD */}
+      {/* LEFT COLUMN: MULTI-STEP  */}
       <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-blue-100 overflow-hidden flex flex-col h-[600px]">
         {/* Step Tracker */}
         <div className="bg-blue-50 p-4 border-b border-blue-100">

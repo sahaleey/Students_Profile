@@ -34,7 +34,7 @@ export default function UsthadDashboard() {
         </p>
       </div>
 
-      {/* 🔥 STATS */}
+      {/* STATS */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         {[
           {
@@ -91,7 +91,7 @@ export default function UsthadDashboard() {
         ))}
       </div>
 
-      {/* 🔥 ACTION CARDS */}
+      {/* ACTION CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <Link
           href="/usthad/punishments"
@@ -144,7 +144,7 @@ export default function UsthadDashboard() {
         </Link>
       </div>
 
-      {/* 🔥 RECENT ACTIVITY */}
+      {/* RECENT ACTIVITY */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-4 border-b flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 bg-gray-50">
           <h2 className="font-bold text-gray-800 flex items-center gap-2 text-sm sm:text-base">

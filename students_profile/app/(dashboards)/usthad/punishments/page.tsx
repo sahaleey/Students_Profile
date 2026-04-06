@@ -30,7 +30,6 @@ const STUDENT_DATA = [
 ];
 
 export default function PunishmentsPage() {
-  // Wizard State
   const [step, setStep] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState<{
     id: string;
@@ -64,7 +63,7 @@ export default function PunishmentsPage() {
   // Handlers
   const handleSelectStudent = (student: { id: string; name: string }) => {
     setSelectedStudent(student);
-    setStep(2); // Move to form
+    setStep(2);
   };
 
   const resetWizard = () => {
@@ -75,7 +74,7 @@ export default function PunishmentsPage() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      {/* LEFT COLUMN: MULTI-STEP WIZARD */}
+      {/* LEFT COLUMN: MULTI-STEP  */}
       <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-red-100 overflow-hidden flex flex-col h-[600px]">
         {/* Step Tracker Header */}
         <div className="bg-red-50 p-4 border-b border-red-100">
