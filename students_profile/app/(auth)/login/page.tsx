@@ -15,37 +15,49 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(""); // Add an error state!
+    setError("");
 
     try {
       const response = await fetch("http://localhost:3001/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }), // Assuming you have state for these
+        body: JSON.stringify({ username, password }),
       });
 
+      // 🚀 THE FIX: If the response is not OK, extract the exact error message from NestJS
       if (!response.ok) {
-        throw new Error("Invalid credentials");
+        const errorData = await response.json();
+        // NestJS usually sends errors in a 'message' field
+        throw new Error(errorData.message || "Failed to connect to server");
       }
 
       const data = await response.json();
 
-      // 1. Save token to localStorage or Cookies (Cookies are safer for Next.js SSR)
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("user", JSON.stringify(data.user));
 
-      // 2. Route based on the backend role!
       if (data.user.role === "student") router.push("/student");
       else if (data.user.role === "usthad") router.push("/usthad");
+      else if (data.user.role === "admin") router.push("/admin");
       else if (data.user.role === "hisan" || data.user.role === "subwing")
         router.push("/hisan");
-    } catch (err) {
-      setError("Invalid username or password");
+    } catch (err: unknown) {
+      // 🚀 THE FIX: Display the exact message thrown by the backend
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" &&
+              err !== null &&
+              "message" in err &&
+              typeof (err as { message: unknown }).message === "string"
+            ? (err as { message: string }).message
+            : "An unexpected error occurred";
+
+      setError(message);
     } finally {
       setIsLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#003634] via-[#00665e] to-[#009689] flex items-center justify-center p-4">
       {/* Glassmorphism Card */}

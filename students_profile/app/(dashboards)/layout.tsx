@@ -12,7 +12,10 @@ import {
   Trophy,
   Star,
   ClipboardList,
+  Users, // Added for Admin
+  Shield, // Added for Admin
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -37,21 +40,19 @@ export default function DashboardLayout({
 
   useEffect(() => {
     try {
-      // 1. FIXED: Look for "user" instead of "auth"
       const userStr = localStorage.getItem("user");
 
       if (!userStr) {
         setIsLoaded(true);
-        // Optional: Force redirect to login if no user is found
-        // router.push("/login");
+        router.push("/login"); // Uncomment this in production!
         return;
       }
 
       const user = JSON.parse(userStr);
 
       setAuthUser({
-        role: user.role || null, // Will be 'usthad' or 'student'
-        name: user.fullName || user.username || "User", // Use fullName from backend
+        role: user.role || null, // 'admin', 'usthad', or 'student'
+        name: user.fullName || user.username || "User",
       });
     } catch {
       localStorage.removeItem("user");
@@ -64,7 +65,6 @@ export default function DashboardLayout({
   const userRole = authUser.role;
   const userName = authUser.name;
 
-  // 2. FIXED: Helper to generate initials (e.g., "Usthad Ahmad" -> "UA")
   const getInitials = (name: string) => {
     if (!name) return "U";
     return name
@@ -75,45 +75,52 @@ export default function DashboardLayout({
       .toUpperCase();
   };
 
-  // 3. FIXED: Updated Sidebar Links based on our new pages
-  const navItems =
-    !isLoaded || userRole === null
-      ? []
-      : userRole === "usthad"
-        ? [
-            { href: "/usthad", label: "Overview", icon: LayoutDashboard },
-            {
-              href: "/usthad/punishments",
-              label: "Punishments",
-              icon: AlertOctagon,
-            },
-            {
-              href: "/usthad/attachments",
-              label: "Attachments",
-              icon: FileCheck,
-            },
-            {
-              href: "/usthad/achievements",
-              label: "Achievements",
-              icon: Trophy,
-            },
-          ]
-        : [
-            { href: "/student", label: "My Portal", icon: LayoutDashboard },
-            {
-              href: "/student/tasks",
-              label: "Action Tasks",
-              icon: ClipboardList,
-            },
-            { href: "/student/works", label: "Achievements", icon: Star },
-          ];
+  type NavItem = {
+    href: string;
+    label: string;
+    icon: LucideIcon;
+  };
+
+  // 1. REFACTORED: Clean routing logic based on roles
+  let navItems: NavItem[] = [];
+
+  if (isLoaded && userRole) {
+    if (userRole === "admin") {
+      navItems = [
+        { href: "/admin", label: "Admin Center", icon: Shield },
+        { href: "/admin/users", label: "Manage Users", icon: Users },
+        {
+          href: "/admin/reports",
+          label: "System Reports",
+          icon: ClipboardList,
+        },
+      ];
+    } else if (userRole === "usthad") {
+      navItems = [
+        { href: "/usthad", label: "Overview", icon: LayoutDashboard },
+        {
+          href: "/usthad/punishments",
+          label: "Punishments",
+          icon: AlertOctagon,
+        },
+        { href: "/usthad/attachments", label: "Attachments", icon: FileCheck },
+        { href: "/usthad/achievements", label: "Achievements", icon: Trophy },
+      ];
+    } else if (userRole === "student") {
+      navItems = [
+        { href: "/student", label: "My Portal", icon: LayoutDashboard },
+        { href: "/student/tasks", label: "Action Tasks", icon: ClipboardList },
+        { href: "/student/works", label: "Achievements", icon: Star },
+      ];
+    }
+  }
 
   const closeSidebar = () => setIsSidebarOpen(false);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
-    window.location.href = "/login"; // Force full page reload to clear memory
+    window.location.href = "/login";
   };
 
   return (
@@ -147,7 +154,12 @@ export default function DashboardLayout({
           </div>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-              <LayoutDashboard size={20} />
+              {/* Dynamic Icon based on role */}
+              {userRole === "admin" ? (
+                <Shield size={20} />
+              ) : (
+                <LayoutDashboard size={20} />
+              )}
             </div>
             <div>
               <h1 className="text-xl font-bold">Campus Portal</h1>
@@ -161,7 +173,8 @@ export default function DashboardLayout({
         {/* Nav */}
         <nav className="flex-1 p-4 space-y-1.5">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive =
+              pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <Link
                 key={item.href}
@@ -209,7 +222,7 @@ export default function DashboardLayout({
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
             </button>
 
-            {/* 4. FIXED: Dynamic User Avatar & Name */}
+            {/* Dynamic User Avatar & Name */}
             <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
               <div className="w-9 h-9 bg-gradient-to-br from-[#004643] to-[#00665e] rounded-xl flex items-center justify-center text-white font-semibold shadow-md">
                 {getInitials(userName)}

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common'; // 🚀 Added UnauthorizedException
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -27,11 +27,28 @@ export class AuthService {
   async validateUser(username: string, pass: string): Promise<any> {
     const user = await this.usersService.findOneByUsername(username);
 
-    if (user && (await bcrypt.compare(pass, user.passwordHash))) {
-      const { passwordHash: _passwordHash, ...result } = user;
-      return result;
+    // Rule 1: Does the user even exist?
+    if (!user) {
+      throw new UnauthorizedException('Invalid username or password');
     }
-    return null;
+
+    // 🚀 Rule 2: THE FIX - Is the user's access revoked?
+    // We explicitly check for false, so if a user has no isActive flag, it won't break.
+    if (user.isActive === false) {
+      throw new UnauthorizedException(
+        'Access Denied: Your account has been revoked by an Admin.',
+      );
+    }
+
+    // Rule 3: Does the password match?
+    const isPasswordValid = await bcrypt.compare(pass, user.passwordHash);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid username or password');
+    }
+
+    // Success! Strip the password and return the user
+    const { passwordHash: _passwordHash, ...result } = user;
+    return result;
   }
 
   // 2. Generate Token
@@ -41,6 +58,7 @@ export class AuthService {
       sub: user.id,
       role: user.role,
     };
+
     return {
       access_token: this.jwtService.sign(payload),
       user: {

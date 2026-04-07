@@ -23,6 +23,9 @@ export class User {
   @Column()
   fullName!: string;
 
+  @Column({ nullable: true })
+  class!: string;
+
   @Column({ type: 'varchar', nullable: true })
   admissionNumber!: string | null;
 
