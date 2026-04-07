@@ -12,55 +12,38 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  // Dummy Users
-  const USERS = [
-    {
-      username: "teacher1",
-      password: "1234",
-      role: "teacher",
-      name: "Usthad Rashid",
-    },
-    {
-      username: "student1",
-      password: "1234",
-      role: "student",
-      name: "Sahaleey",
-    },
-  ];
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
+    setError(""); // Add an error state!
 
-    setTimeout(() => {
-      const user = USERS.find(
-        (u) => u.username === username && u.password === password,
-      );
+    try {
+      const response = await fetch("http://localhost:3001/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }), // Assuming you have state for these
+      });
 
-      if (!user) {
-        setError("Invalid credentials");
-        setIsLoading(false);
-        return;
+      if (!response.ok) {
+        throw new Error("Invalid credentials");
       }
 
-      // Simulated JWT Payload
-      const fakeJWT = {
-        name: user.name,
-        role: user.role,
-      };
+      const data = await response.json();
 
-      localStorage.setItem("auth", JSON.stringify(fakeJWT));
+      // 1. Save token to localStorage or Cookies (Cookies are safer for Next.js SSR)
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("user", JSON.stringify(data.user));
 
-      //  Role-based routing
-      if (user.role === "teacher") {
-        router.push("/usthad");
-      } else if (user.role === "student") {
-        router.push("/student");
-      }
-
+      // 2. Route based on the backend role!
+      if (data.user.role === "student") router.push("/student");
+      else if (data.user.role === "usthad") router.push("/usthad");
+      else if (data.user.role === "hisan" || data.user.role === "subwing")
+        router.push("/hisan");
+    } catch (err) {
+      setError("Invalid username or password");
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -145,18 +128,27 @@ export default function LoginPage() {
               </button>
 
               {/* Demo Credentials */}
+
               <div className="mt-6 pt-4 border-t border-white/20">
                 <p className="text-xs text-[#004643]/70 text-center font-medium mb-2">
-                  Demo Credentials
+                  Demo Credentials (from Database)
                 </p>
                 <div className="flex justify-center gap-6 text-xs">
                   <div className="text-center">
-                    <p className="font-semibold text-[#004643]">Teacher</p>
-                    <p className="text-[#004643]/60">teacher1 / 1234</p>
+                    <p className="font-semibold text-[#004643]">Usthad</p>
+                    <p className="text-[#004643]/60">
+                      usthad_ahmad
+                      <br />
+                      password123
+                    </p>
                   </div>
                   <div className="text-center">
                     <p className="font-semibold text-[#004643]">Student</p>
-                    <p className="text-[#004643]/60">student1 / 1234</p>
+                    <p className="text-[#004643]/60">
+                      1042
+                      <br />
+                      password123
+                    </p>
                   </div>
                 </div>
               </div>
