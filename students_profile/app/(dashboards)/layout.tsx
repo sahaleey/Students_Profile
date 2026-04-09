@@ -13,7 +13,8 @@ import {
   Star,
   ClipboardList,
   Users, // Added for Admin
-  Shield, // Added for Admin
+  Shield,
+  Calendar, // Added for Admin
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -89,6 +90,7 @@ export default function DashboardLayout({
       navItems = [
         { href: "/admin", label: "Admin Center", icon: Shield },
         { href: "/admin/users", label: "Manage Users", icon: Users },
+        { href: "/admin/calendar", label: "Calendar", icon: Calendar },
         {
           href: "/admin/reports",
           label: "System Reports",

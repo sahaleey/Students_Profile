@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { UsthadModule } from './usthad/usthad.module';
 import { AdminModule } from './admin/admin.module';
+import { StudentModule } from './student/student.module';
 
 @Module({
   imports: [
@@ -19,13 +20,15 @@ import { AdminModule } from './admin/admin.module';
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
-      entities: [User],
+      autoLoadEntities: true,
+
       synchronize: true, // Automatically creates SQL tables for you! (Dev only)
     }),
     UsersModule,
     AuthModule,
     UsthadModule,
     AdminModule,
+    StudentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -31,4 +31,27 @@ export class AdminController {
   toggleAccess(@Param('id') id: string, @Body('isActive') isActive: boolean) {
     return this.adminService.toggleAccess(id, isActive);
   }
+
+  @Post('months/start')
+  startMonth(@Body('name') name: string) {
+    return this.adminService.startNewMonth(name);
+  }
+  @Get('months/active')
+  async getActiveMonth() {
+    // Note: If getActiveMonth in service currently only returns a string,
+    // update the service to return the whole object, or just fetch it here:
+    const active = await this.adminService['monthRepo'].findOne({
+      where: { isActive: true },
+    });
+    return active || { name: 'No Active Month', startedAt: null };
+  }
+  @Get('months')
+  getAllMonths() {
+    return this.adminService.getAllMonths();
+  }
+
+  @Post('months/end')
+  endMonth() {
+    return this.adminService.endCurrentMonth();
+  }
 }

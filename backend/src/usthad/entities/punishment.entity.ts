@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
+  JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
@@ -39,6 +40,7 @@ export class Punishment {
 
   // The Usthad who assigned it
   @ManyToOne(() => User, { eager: true })
+  @JoinColumn()
   assignedBy!: User;
 
   @CreateDateColumn()

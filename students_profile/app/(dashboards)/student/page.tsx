@@ -15,95 +15,60 @@ import {
   CheckCircle2,
   Sparkles,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function StudentDashboard() {
-  const [student] = useState({
-    name: "Sahaleey",
-    admnNo: "1042",
-    photoUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sahaleey",
-    points: 450,
-    class: "Class 10",
-    attendance: "92%",
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<any>(null);
 
-  const [categories] = useState([
-    {
-      id: 1,
-      title: "Academics",
-      status: "GREEN",
-      icon: <BookOpen size={20} />,
-      description: "Excellent progress",
-      percentage: 85,
-    },
-    {
-      id: 2,
-      title: "Mosque",
-      status: "YELLOW",
-      icon: <User size={20} />,
-      description: "Needs improvement",
-      percentage: 60,
-    },
-    {
-      id: 3,
-      title: "Public Behavior",
-      status: "RED",
-      icon: <AlertOctagon size={20} />,
-      description: "Immediate attention required",
-      percentage: 30,
-    },
-  ]);
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:3001/student/dashboard", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          setDashboardData(await res.json());
+        }
+      } catch (err) {
+        console.error("Failed to load dashboard");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchDashboard();
+  }, []);
 
-  const hasActivePunishment = categories.some((cat) => cat.status === "RED");
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[60vh] text-[#004643] font-bold animate-pulse">
+        Loading Your Portal...
+      </div>
+    );
+  }
 
-  const [records] = useState([
-    {
-      id: "P01",
-      type: "Punishment",
-      title: "Late to class",
-      status: "Active",
-      date: "Oct 12",
-      points: null,
-    },
-    {
-      id: "AC01",
-      type: "Achievement",
-      title: "Quiz Winner",
-      points: "+50",
-      date: "Oct 10",
-      status: "Completed",
-    },
-    {
-      id: "AC02",
-      type: "Achievement",
-      title: "Best Project Award",
-      points: "+100",
-      date: "Oct 5",
-      status: "Completed",
-    },
-  ]);
+  if (!dashboardData) {
+    return (
+      <div className="text-center text-red-500 mt-10">
+        Failed to load data. Please refresh.
+      </div>
+    );
+  }
 
-  const recentActivities = [
-    {
-      id: 1,
-      action: "Submitted assignment",
-      date: "2 hours ago",
-      icon: <CheckCircle2 size={14} />,
-    },
-    {
-      id: 2,
-      action: "Earned 50 points",
-      date: "Yesterday",
-      icon: <Award size={14} />,
-    },
-    {
-      id: 3,
-      action: "Completed quiz",
-      date: "2 days ago",
-      icon: <Sparkles size={14} />,
-    },
-  ];
+  const { profile, categories, records, recentActivities, monthlyHistory } =
+    dashboardData;
+  const hasActivePunishment = categories.some(
+    (cat: any) => cat.status === "RED",
+  );
+
+  // Helper to get the right icon based on title
+  const getCategoryIcon = (title: string) => {
+    if (title.includes("Academics")) return <BookOpen size={20} />;
+    if (title.includes("Mosque")) return <User size={20} />;
+    return <AlertOctagon size={20} />;
+  };
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12 animate-fadeInUp">
@@ -114,7 +79,7 @@ export default function StudentDashboard() {
             Student Dashboard
           </h1>
           <p className="text-[#004643]/60 mt-1">
-            Welcome back, {student.name}!
+            Welcome back, {profile.name}!
           </p>
         </div>
         <Link
@@ -129,15 +94,14 @@ export default function StudentDashboard() {
         </Link>
       </div>
 
-      {/* SECTION 1: PROFILE & OVERALL STATUS - Glassmorphism */}
+      {/* SECTION 1: PROFILE & OVERALL STATUS */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Profile Card */}
         <div className="lg:col-span-1 backdrop-blur-xl bg-white/70 rounded-2xl shadow-xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-300">
           <div className="flex items-center gap-5">
             <div className="relative">
               <div className="w-24 h-24 bg-gradient-to-br from-[#004643] to-[#00665e] rounded-2xl overflow-hidden ring-4 ring-white/50 shadow-lg">
                 <img
-                  src={student.photoUrl}
+                  src={profile.photoUrl}
                   alt="Profile"
                   className="w-full h-full object-cover"
                 />
@@ -147,52 +111,44 @@ export default function StudentDashboard() {
               </div>
             </div>
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-[#004643]">
-                {student.name}
+              <h2 className="text-2xl font-bold text-[#004643] capitalize">
+                {profile.name}
               </h2>
               <p className="text-sm font-medium text-[#004643]/60 mt-1">
-                Admn: {student.admnNo}
+                Ad No: {profile.admnNo}
               </p>
               <div className="flex items-center gap-2 mt-2">
-                <Calendar size={14} className="text-[#004643]/40" />
-                <p className="text-xs text-[#004643]/60">{student.class}</p>
+                <p className="text-xs text-[#004643]/60">
+                  Class: {profile.class}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Stats Grid */}
           <div className="grid grid-cols-2 gap-3 mt-6 pt-4 border-t border-gray-200/50">
             <div className="text-center p-2 bg-white/50 rounded-xl">
               <p className="text-2xl font-bold text-[#004643]">
-                {student.points}
+                {profile.points}
               </p>
               <p className="text-xs text-[#004643]/60">Total Points</p>
             </div>
-            <div className="text-center p-2 bg-white/50 rounded-xl">
+            {/* <div className="text-center p-2 bg-white/50 rounded-xl">
               <p className="text-2xl font-bold text-[#004643]">
-                {student.attendance}
+                {profile.attendance}
               </p>
               <p className="text-xs text-[#004643]/60">Attendance</p>
-            </div>
+            </div> */}
           </div>
         </div>
 
-        {/* Status Banner*/}
+        {/* Status Banner */}
         <div className="lg:col-span-2 backdrop-blur-xl rounded-2xl shadow-xl border border-white/50 overflow-hidden transition-all duration-500">
           <div
-            className={`p-6 ${
-              hasActivePunishment
-                ? "bg-gradient-to-r from-red-500/20 to-red-600/20"
-                : "bg-gradient-to-r from-emerald-500/20 to-emerald-600/20"
-            }`}
+            className={`p-6 h-full flex flex-col justify-center ${hasActivePunishment ? "bg-gradient-to-r from-red-500/20 to-red-600/20" : "bg-gradient-to-r from-emerald-500/20 to-emerald-600/20"}`}
           >
             <div className="flex items-center gap-5 flex-wrap">
               <div
-                className={`p-4 rounded-2xl backdrop-blur-sm ${
-                  hasActivePunishment
-                    ? "bg-red-500/30 text-red-600"
-                    : "bg-emerald-500/30 text-emerald-600"
-                }`}
+                className={`p-4 rounded-2xl backdrop-blur-sm ${hasActivePunishment ? "bg-red-500/30 text-red-600" : "bg-emerald-500/30 text-emerald-600"}`}
               >
                 {hasActivePunishment ? (
                   <AlertOctagon size={32} />
@@ -202,128 +158,117 @@ export default function StudentDashboard() {
               </div>
               <div className="flex-1">
                 <h3
-                  className={`text-xl font-bold ${
-                    hasActivePunishment ? "text-red-700" : "text-emerald-700"
-                  }`}
+                  className={`text-xl font-bold ${hasActivePunishment ? "text-red-700" : "text-emerald-700"}`}
                 >
                   {hasActivePunishment
                     ? "⚠️ Action Required: Active Punishment"
                     : "✅ Status Normal: Good Standing"}
                 </h3>
                 <p
-                  className={`mt-1 text-sm ${
-                    hasActivePunishment ? "text-red-600" : "text-emerald-600"
-                  }`}
+                  className={`mt-1 text-sm ${hasActivePunishment ? "text-red-600" : "text-emerald-600"}`}
                 >
                   {hasActivePunishment
-                    ? "Your points are frozen. Check your red categories and submit corrective work immediately."
+                    ? "Check your red categories and submit corrective work immediately."
                     : "You are doing great! Keep participating to earn more points and achievements."}
                 </p>
               </div>
               {hasActivePunishment && (
-                <button
-                  onClick={() => {
-                    window.location.href = "/student/tasks";
-                  }}
+                <Link
+                  href="/student/tasks"
                   className="px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
                 >
                   View Tasks
-                </button>
+                </Link>
               )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* SECTION 2: POINTS & CATEGORIES - Glass Cards */}
+      {/* SECTION 2: POINTS & CATEGORIES */}
       <section className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Points Card - Gradient Glass */}
         <div
-          className={`lg:col-span-1 backdrop-blur-xl bg-gradient-to-br from-[#004643] to-[#00665e] p-6 rounded-2xl shadow-xl border border-white/20 relative overflow-hidden transition-all duration-500 ${
-            hasActivePunishment ? "opacity-75" : ""
-          }`}
+          className={`lg:col-span-1 backdrop-blur-xl bg-gradient-to-br from-[#004643] to-[#00665e] p-6 rounded-2xl shadow-xl border border-white/20 relative overflow-hidden transition-all duration-500 ${hasActivePunishment ? "opacity-75" : ""}`}
         >
           <Trophy
             size={120}
             className="absolute -right-8 -bottom-8 text-white/10"
           />
           <div className="relative z-10">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
+                <Award size={20} className="text-yellow-400" />
+                <h2 className="text-white/80 font-semibold text-xs uppercase tracking-wider">
+                  {profile.currentMonthName} Points
+                </h2>
+              </div>
+            </div>
+
+            {/* Current Month Points */}
+            <div className="text-5xl font-black text-white flex items-baseline gap-2">
+              {profile.currentMonthPoints}
+              <span className="text-lg text-white/50 font-medium">/ 1000</span>
+            </div>
+
+            <div className="mt-3 h-2 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full transition-all duration-500"
+                style={{
+                  width: `${Math.min((profile.currentMonthPoints / 1000) * 100, 100)}%`,
+                }}
+              />
+            </div>
+
+            {/* Lifetime Total Points Badge */}
+            <div className="mt-5 pt-4 border-t border-white/20 flex justify-between items-center">
+              <span className="text-white/70 text-xs font-medium">
+                Lifetime Total:
+              </span>
+              <span className="bg-white/20 px-3 py-1 rounded-lg text-white font-bold text-sm">
+                {profile.lifetimePoints} pts
+              </span>
+            </div>
             <div className="flex items-center gap-2 mb-3">
               <Award size={20} className="text-yellow-400" />
               <h2 className="text-white/80 font-semibold text-sm uppercase tracking-wider">
-                Monthly Points
+                Total Points
               </h2>
             </div>
             <div className="text-5xl font-black text-white flex items-baseline gap-2">
-              {student.points}
+              {profile.points}
               <span className="text-lg text-white/50 font-medium">/ 1000</span>
             </div>
             <div className="mt-3 h-2 bg-white/20 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full transition-all duration-500"
-                style={{ width: `${(student.points / 1000) * 100}%` }}
+                style={{
+                  width: `${Math.min((profile.points / 1000) * 100, 100)}%`,
+                }}
               />
             </div>
-            <p className="text-white/60 text-xs mt-3 flex items-center gap-1">
-              <TrendingUp size={12} />
-              {student.points >= 500
-                ? "Excellent progress! 🎉"
-                : `${1000 - student.points} more points to reach target`}
-            </p>
           </div>
         </div>
 
-        {/* Categories - Glass Cards */}
         <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {categories.map((cat) => (
+          {categories.map((cat: any) => (
             <div
               key={cat.id}
-              className={`group backdrop-blur-xl rounded-2xl shadow-lg border p-5 transition-all duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer ${
-                cat.status === "GREEN"
-                  ? "bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 border-emerald-500/30 hover:border-emerald-500/50"
-                  : cat.status === "YELLOW"
-                    ? "bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border-yellow-500/30 hover:border-yellow-500/50"
-                    : "bg-gradient-to-br from-red-500/20 to-red-600/20 border-red-500/30 hover:border-red-500/50"
-              }`}
+              className={`group backdrop-blur-xl rounded-2xl shadow-lg border p-5 transition-all duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer ${cat.status === "GREEN" ? "bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 border-emerald-500/30" : "bg-gradient-to-br from-red-500/20 to-red-600/20 border-red-500/30"}`}
             >
               <div className="flex justify-between items-start mb-3">
                 <div
-                  className={`p-2.5 rounded-xl backdrop-blur-sm ${
-                    cat.status === "GREEN"
-                      ? "bg-emerald-500/30"
-                      : cat.status === "YELLOW"
-                        ? "bg-yellow-500/30"
-                        : "bg-red-500/30"
-                  }`}
+                  className={`p-2.5 rounded-xl backdrop-blur-sm ${cat.status === "GREEN" ? "bg-emerald-500/30 text-emerald-900" : "bg-red-500/30 text-red-900"}`}
                 >
-                  {cat.icon}
+                  {getCategoryIcon(cat.title)}
                 </div>
                 <div
-                  className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
-                    cat.status === "GREEN"
-                      ? "bg-emerald-500/40 text-emerald-900"
-                      : cat.status === "YELLOW"
-                        ? "bg-yellow-500/40 text-yellow-900"
-                        : "bg-red-500/40 text-red-900"
-                  }`}
+                  className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${cat.status === "GREEN" ? "bg-emerald-500/40 text-emerald-900" : "bg-red-500/40 text-red-900"}`}
                 >
                   {cat.status}
                 </div>
               </div>
               <h3 className="font-bold text-lg text-gray-800">{cat.title}</h3>
               <p className="text-xs text-gray-600/70 mt-1">{cat.description}</p>
-              <div className="mt-3 h-1.5 bg-white/30 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${
-                    cat.status === "GREEN"
-                      ? "bg-emerald-500"
-                      : cat.status === "YELLOW"
-                        ? "bg-yellow-500"
-                        : "bg-red-500"
-                  }`}
-                  style={{ width: `${cat.percentage}%` }}
-                />
-              </div>
             </div>
           ))}
         </div>
@@ -331,99 +276,102 @@ export default function StudentDashboard() {
 
       {/* SECTION 3: OFFICIAL RECORDS & ACTIVITIES */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Official Records - Main Section */}
-        <section className="lg:col-span-2 backdrop-blur-xl bg-white/60 rounded-2xl shadow-xl border border-white/50 overflow-hidden hover:shadow-2xl transition-all duration-300">
+        <section className="lg:col-span-2 backdrop-blur-xl bg-white/60 rounded-2xl shadow-xl border border-white/50 overflow-hidden">
           <div className="bg-gradient-to-r from-[#004643]/10 to-transparent p-5 border-b border-white/30">
             <h2 className="font-bold text-[#004643] flex items-center gap-2">
               <FileText size={18} /> Official Records
             </h2>
           </div>
           <div className="divide-y divide-white/30">
-            {records.map((rec, idx) => (
-              <div
-                key={rec.id}
-                className="group p-5 hover:bg-white/40 transition-all duration-300 animate-slideIn"
-                style={{ animationDelay: `${idx * 100}ms` }}
-              >
-                <div className="flex justify-between items-center flex-wrap gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg ${
-                          rec.type === "Punishment"
-                            ? "bg-red-500/20 text-red-700"
-                            : "bg-emerald-500/20 text-emerald-700"
-                        }`}
-                      >
-                        {rec.type}
-                      </span>
-                      <span className="text-xs text-gray-500 flex items-center gap-1">
-                        <Calendar size={10} /> {rec.date}
-                      </span>
-                    </div>
-                    <p className="font-semibold text-gray-800 text-lg">
-                      {rec.title}
-                    </p>
-                  </div>
-                  {rec.points ? (
-                    <div className="text-right">
-                      <span className="font-black text-[#004643] text-xl bg-emerald-500/20 px-4 py-2 rounded-xl">
-                        {rec.points}
-                      </span>
-                      <p className="text-xs text-gray-500 mt-1">
-                        points earned
+            {records.length === 0 ? (
+              <p className="p-8 text-center text-gray-500 font-medium">
+                No records found yet.
+              </p>
+            ) : (
+              records.map((rec: any, idx: number) => (
+                <div
+                  key={rec.id}
+                  className="group p-5 hover:bg-white/40 transition-all duration-300 animate-slideIn"
+                  style={{ animationDelay: `${idx * 100}ms` }}
+                >
+                  <div className="flex justify-between items-center flex-wrap gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg ${rec.type === "Punishment" ? "bg-red-500/20 text-red-700" : "bg-emerald-500/20 text-emerald-700"}`}
+                        >
+                          {rec.type}
+                        </span>
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <Calendar size={10} />{" "}
+                          {new Date(rec.date).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="font-semibold text-gray-800 text-lg capitalize">
+                        {rec.title}
                       </p>
                     </div>
-                  ) : (
-                    <span className="text-xs font-bold text-red-600 bg-red-500/20 px-4 py-2 rounded-full">
-                      {rec.status}
-                    </span>
-                  )}
+                    {rec.points ? (
+                      <div className="text-right">
+                        <span className="font-black text-[#004643] text-xl bg-emerald-500/20 px-4 py-2 rounded-xl">
+                          {rec.points}
+                        </span>
+                        <p className="text-xs text-gray-500 mt-1">
+                          points earned
+                        </p>
+                      </div>
+                    ) : (
+                      <span
+                        className={`text-xs font-bold px-4 py-2 rounded-full ${rec.status === "RESOLVED" ? "bg-emerald-100 text-emerald-700" : "bg-red-500/20 text-red-600"}`}
+                      >
+                        {rec.status}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </section>
 
-        {/* Recent Activity - Sidebar */}
-        <section className="backdrop-blur-xl bg-white/60 rounded-2xl shadow-xl border border-white/50 overflow-hidden hover:shadow-2xl transition-all duration-300">
+        <section className="backdrop-blur-xl bg-white/60 rounded-2xl shadow-xl border border-white/50 overflow-hidden">
           <div className="bg-gradient-to-r from-[#004643]/10 to-transparent p-5 border-b border-white/30">
             <h2 className="font-bold text-[#004643] flex items-center gap-2">
-              <Clock size={18} /> Recent Activity
+              <Clock size={18} /> Recent Submissions
             </h2>
           </div>
           <div className="p-5 space-y-3">
-            {recentActivities.map((activity, idx) => (
-              <div
-                key={activity.id}
-                className="flex items-center gap-3 p-3 bg-white/50 backdrop-blur-sm rounded-xl hover:bg-white/70 transition-all duration-300 animate-slideIn"
-                style={{ animationDelay: `${idx * 100}ms` }}
-              >
-                <div className="p-2 bg-[#004643]/10 rounded-lg text-[#004643]">
-                  {activity.icon}
+            {recentActivities.length === 0 ? (
+              <p className="text-center text-gray-500 text-sm mt-4">
+                No recent activity.
+              </p>
+            ) : (
+              recentActivities.map((activity: any, idx: number) => (
+                <div
+                  key={activity.id}
+                  className="flex items-center gap-3 p-3 bg-white/50 backdrop-blur-sm rounded-xl hover:bg-white/70 transition-all duration-300 animate-slideIn"
+                  style={{ animationDelay: `${idx * 100}ms` }}
+                >
+                  <div
+                    className={`p-2 rounded-lg ${activity.status === "APPROVED" ? "bg-emerald-100 text-emerald-700" : activity.status === "REJECTED" ? "bg-red-100 text-red-700" : "bg-[#004643]/10 text-[#004643]"}`}
+                  >
+                    {activity.status === "APPROVED" ? (
+                      <CheckCircle2 size={14} />
+                    ) : (
+                      <Sparkles size={14} />
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-800 capitalize">
+                      {activity.action}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(activity.date).toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-800">
-                    {activity.action}
-                  </p>
-                  <p className="text-xs text-gray-500">{activity.date}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Quick Stats */}
-          <div className="p-5 border-t border-white/30 bg-gradient-to-r from-[#004643]/5 to-transparent">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="text-center">
-                <p className="text-2xl font-bold text-[#004643]">12</p>
-                <p className="text-xs text-gray-600">Total Submissions</p>
-              </div>
-              <div className="text-center">
-                <p className="text-2xl font-bold text-[#004643]">8</p>
-                <p className="text-xs text-gray-600">Achievements</p>
-              </div>
-            </div>
+              ))
+            )}
           </div>
         </section>
       </div>
@@ -439,7 +387,6 @@ export default function StudentDashboard() {
             transform: translateY(0);
           }
         }
-
         @keyframes slideIn {
           from {
             opacity: 0;
@@ -450,11 +397,9 @@ export default function StudentDashboard() {
             transform: translateX(0);
           }
         }
-
         .animate-fadeInUp {
           animation: fadeInUp 0.6s ease-out;
         }
-
         .animate-slideIn {
           animation: slideIn 0.4s ease-out forwards;
           opacity: 0;

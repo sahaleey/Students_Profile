@@ -2,6 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  JoinColumn,
   ManyToOne,
   CreateDateColumn,
 } from 'typeorm';
@@ -36,12 +37,18 @@ export class Submission {
   status!: SubmissionStatus;
 
   @ManyToOne(() => User, { eager: true })
+  @JoinColumn()
   student!: User;
 
   // If this submission is meant to clear a punishment, link it here
   @ManyToOne(() => Punishment, { nullable: true, eager: true })
+  @JoinColumn()
   targetPunishment!: Punishment;
 
   @CreateDateColumn()
   createdAt!: Date;
+
+  @ManyToOne(() => User, { nullable: true, eager: true })
+  @JoinColumn()
+  verifiedBy!: User;
 }

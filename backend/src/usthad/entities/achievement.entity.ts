@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   CreateDateColumn,
+  JoinColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
@@ -18,11 +19,15 @@ export class Achievement {
   @Column('int')
   points!: number;
 
+  @Column({ default: 'Term 1 - 2026' })
+  academicMonth!: string;
+
   @ManyToOne(() => User, { eager: true })
   student!: User;
 
   @ManyToOne(() => User, { eager: true })
-  grantedBy!: User;
+  @JoinColumn()
+  awardedBy!: User;
 
   @CreateDateColumn()
   createdAt!: Date;

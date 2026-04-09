@@ -12,7 +12,7 @@ export default function AdminCentre() {
   const [formData, setFormData] = useState({
     fullName: "",
     role: "student",
-    studentClass: "Senior Secondary 1st Year", // Default class
+    class: "1",
     username: "",
     password: "campus123",
   });
@@ -29,7 +29,7 @@ export default function AdminCentre() {
     const payload =
       formData.role === "student"
         ? { ...formData }
-        : (({ studentClass, ...rest }) => rest)(formData);
+        : (({ class: _class, ...rest }) => rest)(formData);
 
     try {
       const response = await fetch("http://localhost:3001/admin/users", {
@@ -52,7 +52,7 @@ export default function AdminCentre() {
       setFormData({
         fullName: "",
         role: "student",
-        studentClass: "Senior Secondary 1st Year",
+        class: "1",
         username: "",
         password: "campus123",
       });
@@ -115,7 +115,7 @@ export default function AdminCentre() {
                   setFormData({ ...formData, fullName: e.target.value })
                 }
                 placeholder="e.g., Muhammed Bilal"
-                className="w-full mt-1.5 p-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-gray-900"
+                className="w-full mt-1.5 p-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 text-black"
               />
             </div>
 
@@ -126,7 +126,7 @@ export default function AdminCentre() {
                 onChange={(e) =>
                   setFormData({ ...formData, role: e.target.value })
                 }
-                className="w-full mt-1.5 p-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-gray-900"
+                className="w-full mt-1.5 p-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 text-black"
               >
                 <option value="student">Student</option>
                 <option value="usthad">Usthad</option>
@@ -143,20 +143,22 @@ export default function AdminCentre() {
                 Class / Batch
               </label>
               <select
-                value={formData.studentClass}
+                value={formData.class}
                 onChange={(e) =>
-                  setFormData({ ...formData, studentClass: e.target.value })
+                  setFormData({ ...formData, class: e.target.value })
                 }
-                className="w-full mt-1.5 p-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-gray-900"
+                className="w-full mt-1.5 p-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 text-black"
               >
-                <option value="Senior Secondary 1st Year">
-                  Senior Secondary 1st Year
-                </option>
-                <option value="Senior Secondary 2nd Year">
-                  Senior Secondary 2nd Year
-                </option>
-                <option value="Degree 1st Year">Degree 1st Year</option>
-                <option value="Degree 2nd Year">Degree 2nd Year</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
               </select>
             </div>
           )}
@@ -174,7 +176,7 @@ export default function AdminCentre() {
                   setFormData({ ...formData, username: e.target.value })
                 }
                 placeholder="e.g., 1080"
-                className="w-full mt-1.5 p-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-gray-900"
+                className="w-full mt-1.5 p-3 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 text-black"
               />
             </div>
 
