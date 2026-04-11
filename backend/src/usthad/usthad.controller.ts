@@ -129,9 +129,9 @@ export class UsthadController {
         // 🚀 Submissions tied to MY punishments
         { targetPunishment: { assignedBy: { id: req.user.userId } } },
         // 🚀 OR open achievement requests
-        { targetPunishment: IsNull() },
+        { targetPunishment: IsNull(), targetedUsthad: { id: req.user.userId } },
       ],
-      relations: ['student', 'targetPunishment'],
+      relations: ['student', 'targetPunishment', 'targetedUsthad'],
       order: { createdAt: 'DESC' },
     });
   }

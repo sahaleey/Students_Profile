@@ -14,6 +14,8 @@ import {
   Clock,
   CheckCircle2,
   Sparkles,
+  Laptop,
+  LibraryBig,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -67,6 +69,8 @@ export default function StudentDashboard() {
   const getCategoryIcon = (title: string) => {
     if (title.includes("Academics")) return <BookOpen size={20} />;
     if (title.includes("Mosque")) return <User size={20} />;
+    if (title.includes("Computer Lab")) return <Laptop size={20} />;
+    if (title.includes("Library")) return <LibraryBig size={20} />;
     return <AlertOctagon size={20} />;
   };
 

@@ -17,6 +17,9 @@ import {
 export default function StudentWorksPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [myWorks, setMyWorks] = useState<any[]>([]);
+  const [usthads, setUsthads] = useState<Array<{ id: string; fullName: string }>>(
+    [],
+  );
   const [stats, setStats] = useState({
     totalPoints: 0,
     approvedWorks: 0,
@@ -25,6 +28,7 @@ export default function StudentWorksPage() {
   const [formData, setFormData] = useState({
     title: "",
     content: "",
+    targetedUsthadId: "",
   });
 
   const getToken = () => localStorage.getItem("token");
@@ -60,14 +64,36 @@ export default function StudentWorksPage() {
     }
   };
 
+  const fetchUsthads = async () => {
+    try {
+      const token = getToken();
+      const res = await fetch("http://localhost:3001/student/usthads", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+
+      const data = await res.json();
+      setUsthads(data);
+      setFormData((prev) => ({
+        ...prev,
+        targetedUsthadId:
+          prev.targetedUsthadId || (data.length > 0 ? data[0].id : ""),
+      }));
+    } catch {
+      console.error("Failed to fetch Usthads");
+    }
+  };
+
   useEffect(() => {
     fetchMyWorks();
+    fetchUsthads();
   }, []);
 
   // 2. SUBMIT NEW WORK
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.content) return;
+    if (!formData.title || !formData.content || !formData.targetedUsthadId)
+      return;
     setIsSubmitting(true);
 
     try {
@@ -83,7 +109,11 @@ export default function StudentWorksPage() {
       if (!res.ok) throw new Error("Failed to submit");
 
       // Success! Clear form and refresh list
-      setFormData({ title: "", content: "" });
+      setFormData((prev) => ({
+        title: "",
+        content: "",
+        targetedUsthadId: prev.targetedUsthadId,
+      }));
       await fetchMyWorks();
     } catch (error) {
       alert("Failed to submit work. Try again.");
@@ -182,6 +212,10 @@ export default function StudentWorksPage() {
                             "{displayContent}"
                           </p>
                         )}
+                        <p className="text-xs text-[#004643]/70 mt-2 font-medium">
+                          Targeted Usthad:{" "}
+                          {work.targetedUsthad?.fullName || "Not specified"}
+                        </p>
                       </div>
 
                       <div
@@ -227,6 +261,30 @@ export default function StudentWorksPage() {
               onSubmit={handleSubmit}
               className="p-6 space-y-5 bg-gradient-to-b from-white/50 to-white/30"
             >
+              <div>
+                <label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-1.5">
+                  <Sparkles size={14} /> Targeted Usthad
+                </label>
+                <select
+                  required
+                  value={formData.targetedUsthadId}
+                  onChange={(e) =>
+                    setFormData({ ...formData, targetedUsthadId: e.target.value })
+                  }
+                  className="w-full p-3 bg-white/80 backdrop-blur-sm border text-black border-gray-200 rounded-xl outline-none focus:border-[#004643] focus:ring-2 focus:ring-[#004643]/20 transition-all"
+                >
+                  {usthads.length === 0 ? (
+                    <option value="">No Usthads available</option>
+                  ) : (
+                    usthads.map((usthad) => (
+                      <option key={usthad.id} value={usthad.id}>
+                        {usthad.fullName}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
               <div>
                 <label className="text-sm font-semibold text-gray-700 flex items-center gap-2 mb-1.5">
                   <Sparkles size={14} /> Name of Work

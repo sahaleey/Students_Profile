@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { Punishment, PunishmentStatus } from './entities/punishment.entity';
@@ -117,6 +117,7 @@ export class UsthadService {
         {
           status: SubmissionStatus.PENDING,
           targetPunishment: IsNull(),
+          targetedUsthad: { id: usthadId },
         },
       ],
       relations: ['student', 'targetPunishment'],
@@ -148,6 +149,19 @@ export class UsthadService {
 
     if (!submission) {
       throw new NotFoundException('Submission not found');
+    }
+
+    const canVerifyPunishmentSubmission =
+      !!submission.targetPunishment &&
+      submission.targetPunishment.assignedBy?.id === usthadId;
+    const canVerifyAchievementSubmission =
+      !submission.targetPunishment &&
+      submission.targetedUsthad?.id === usthadId;
+
+    if (!canVerifyPunishmentSubmission && !canVerifyAchievementSubmission) {
+      throw new ForbiddenException(
+        'You are not allowed to verify this submission',
+      );
     }
 
     const verifier = await this.userRepo.findOne({

@@ -40,6 +40,10 @@ export class Submission {
   @JoinColumn()
   student!: User;
 
+  @ManyToOne(() => User, { nullable: true, eager: true })
+  @JoinColumn()
+  targetedUsthad!: User | null;
+
   // If this submission is meant to clear a punishment, link it here
   @ManyToOne(() => Punishment, { nullable: true, eager: true })
   @JoinColumn()

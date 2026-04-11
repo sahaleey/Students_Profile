@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   Get,
   UseGuards,
@@ -34,16 +35,37 @@ export class StudentController {
     return this.studentService.getDashboardData(req.user.userId);
   }
 
+  @Get('usthads')
+  getUsthads() {
+    return this.studentService['userRepo'].find({
+      where: { role: Role.USTHAD, isActive: true },
+      select: ['id', 'fullName'],
+      order: { fullName: 'ASC' },
+    });
+  }
+
   // --- WORKS / ACHIEVEMENTS ---
   @Post('submissions')
   async submitWork(
     @Request() req: AuthenticatedRequest,
-    @Body() body: { title: string; content: string },
+    @Body() body: { title: string; content: string; targetedUsthadId: string },
   ) {
+    if (!body.targetedUsthadId) {
+      throw new BadRequestException('Please select a target Usthad');
+    }
+
+    const targetedUsthad = await this.studentService['userRepo'].findOne({
+      where: { id: body.targetedUsthadId, role: Role.USTHAD, isActive: true },
+    });
+    if (!targetedUsthad) {
+      throw new BadRequestException('Selected Usthad not found');
+    }
+
     const formattedTitle = `${body.title} | Content: ${body.content}`;
 
     const submission = this.studentService['submissionRepo'].create({
       student: { id: req.user.userId },
+      targetedUsthad: { id: body.targetedUsthadId },
       title: formattedTitle,
       purpose: 'STUDENT_SUBMISSION',
       status: SubmissionStatus.PENDING,
@@ -56,9 +78,17 @@ export class StudentController {
     await this.notifService.sendNotification({
       recipientId: req.user.userId,
       title: 'Submission Sent',
-      message: `Your achievement request "${body.title}" has been sent for verification.`,
+      message: `Your achievement request "${body.title}" has been sent to ${targetedUsthad.fullName} for verification.`,
       type: 'INFO',
       link: '/student/works',
+    });
+
+    await this.notifService.sendNotification({
+      recipientId: targetedUsthad.id,
+      title: 'New Achievement Request',
+      message: `A student submitted "${body.title}" for your verification.`,
+      type: 'INFO',
+      link: '/usthad/attachments',
     });
 
     return savedSubmission;

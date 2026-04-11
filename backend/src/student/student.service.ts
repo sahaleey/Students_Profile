@@ -116,6 +116,20 @@ export class StudentService {
         description: 'Discipline and conduct',
         percentage: checkStatus('Public Behavior') === 'GREEN' ? 100 : 30,
       },
+      {
+        id: 4,
+        title: 'Computer Lab',
+        status: checkStatus('Computer Lab'),
+        description: 'Lab discipline and usage',
+        percentage: checkStatus('Computer Lab') === 'GREEN' ? 100 : 30,
+      },
+      {
+        id: 5,
+        title: 'Library',
+        status: checkStatus('Library'),
+        description: 'Library behavior and book returns',
+        percentage: checkStatus('Library') === 'GREEN' ? 100 : 30,
+      },
     ];
 
     // 4. Combine Punishments and Achievements into a "Records" timeline

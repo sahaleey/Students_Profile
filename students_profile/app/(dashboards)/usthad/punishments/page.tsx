@@ -31,7 +31,7 @@ export default function PunishmentsPage() {
   // 🚀 Form State
   const [formData, setFormData] = useState({
     title: "",
-    category: "Public Behavior", // Default matches your UI
+    category: "Public Behavior",
     description: "",
   });
 
@@ -314,6 +314,8 @@ export default function PunishmentsPage() {
                   >
                     <option value="Public Behavior">Public Behavior</option>
                     <option value="Academics">Academics</option>
+                    <option value="Computer Lab">Computer Lab</option>
+                    <option value="Library">Library</option>
                     <option value="Mosque Attendance">Mosque Attendance</option>
                   </select>
                 </div>
