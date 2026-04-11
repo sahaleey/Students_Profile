@@ -167,4 +167,9 @@ export class UsthadController {
     });
     return this.usthadService['submissionRepo'].save(submission);
   }
+  @Roles(Role.USTHAD, Role.HISAN, Role.ADMIN)
+  @Get('students/:id')
+  getStudentProfile(@Param('id') id: string) {
+    return this.usthadService.getStudentProfile(id);
+  }
 }

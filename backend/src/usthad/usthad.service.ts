@@ -1,10 +1,15 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, IsNull } from 'typeorm';
 import { Punishment, PunishmentStatus } from './entities/punishment.entity';
 import { Achievement } from './entities/achievement.entity';
 import { Submission, SubmissionStatus } from './entities/submission.entity';
 import { User } from '../users/entities/user.entity';
+import { Role } from '../users/enums/role.enum';
 import { AcademicMonth } from '../admin/entities/academic-month.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 
@@ -292,4 +297,83 @@ export class UsthadService {
     if (!achievement) throw new NotFoundException('Achievement not found');
     return this.achievementRepo.remove(achievement);
   }
+
+  // Fetch a single student's full profile for Usthad
+  async getStudentProfile(studentId: string) {
+    const student = await this.userRepo.findOne({
+      where: { id: studentId, role: Role.STUDENT },
+      select: ['id', 'fullName', 'username', 'class', 'isActive'],
+    });
+
+    if (!student) throw new NotFoundException('Student not found');
+
+    const achievements = await this.achievementRepo.find({
+      where: { student: { id: studentId } },
+    });
+    const punishments = await this.punishmentRepo.find({
+      where: { student: { id: studentId } },
+    });
+
+    const totalPoints = achievements.reduce((sum, a) => sum + a.points, 0);
+    const activePunishments = punishments.filter(
+      (p) => p.status === PunishmentStatus.ACTIVE,
+    );
+
+    // 🚀 Calculate Category Statuses (Red or Green)
+    // Here we define the logic. If a student has an active punishment in a category, it's RED.
+    const checkStatus = (categoryName: string) => {
+      const hasActive = punishments.some(
+        (p) =>
+          p.category === categoryName && p.status !== PunishmentStatus.RESOLVED,
+      );
+      return hasActive ? 'RED' : 'GREEN';
+    };
+
+    const categories = [
+      {
+        id: 1,
+        title: 'Academics',
+        status: checkStatus('Academics'),
+        description: 'Academic performance',
+        percentage: checkStatus('Academics') === 'GREEN' ? 100 : 30,
+      },
+      {
+        id: 2,
+        title: 'Mosque',
+        status: checkStatus('Mosque Attendance'),
+        description: 'Prayer punctuality',
+        percentage: checkStatus('Mosque Attendance') === 'GREEN' ? 100 : 30,
+      },
+      {
+        id: 3,
+        title: 'Public Behavior',
+        status: checkStatus('Public Behavior'),
+        description: 'Discipline and conduct',
+        percentage: checkStatus('Public Behavior') === 'GREEN' ? 100 : 30,
+      },
+      {
+        id: 4,
+        title: 'Computer Lab',
+        status: checkStatus('Computer Lab'),
+        description: 'Lab discipline and usage',
+        percentage: checkStatus('Computer Lab') === 'GREEN' ? 100 : 30,
+      },
+      {
+        id: 5,
+        title: 'Library',
+        status: checkStatus('Library'),
+        description: 'Library behavior and book returns',
+        percentage: checkStatus('Library') === 'GREEN' ? 100 : 30,
+      },
+    ];
+
+    return {
+      profile: { ...student, totalPoints },
+      categories,
+      activePunishments,
+      recentAchievements: achievements.slice(0, 5), // Last 5 achievements
+    };
+  }
 }
+
+

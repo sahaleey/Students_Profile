@@ -21,7 +21,8 @@ import {
   LucideTrophy,
   Layers,
   Key,
-  LayoutDashboardIcon, // Added for Admin
+  LayoutDashboardIcon,
+  Info, // Added for Admin
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -146,6 +147,7 @@ export default function DashboardLayout({
         },
         { href: "/usthad/attachments", label: "Attachments", icon: FileCheck },
         { href: "/usthad/achievements", label: "Achievements", icon: Trophy },
+        { href: "/usthad/students", label: "Students Status", icon: Info },
       ];
     } else if (userRole === "student") {
       navItems = [
