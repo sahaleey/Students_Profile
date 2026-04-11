@@ -8,22 +8,116 @@ import { Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { AcademicMonth } from './entities/academic-month.entity';
 import * as bcrypt from 'bcrypt';
+import { Achievement } from '../usthad/entities/achievement.entity';
+import {
+  Punishment,
+  PunishmentStatus,
+} from '../usthad/entities/punishment.entity';
 
 @Injectable()
 export class AdminService {
   constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    @InjectRepository(User) private usersRepository: Repository<User>,
     @InjectRepository(AcademicMonth)
     private monthRepo: Repository<AcademicMonth>,
+    @InjectRepository(Achievement)
+    private achievementRepo: Repository<Achievement>, // 🚀 Added
+    @InjectRepository(Punishment)
+    private punishmentRepo: Repository<Punishment>, // 🚀 Added
   ) {}
 
   // 1. Get all users
   async getAllUsers() {
-    return this.usersRepository.find({
-      select: ['id', 'fullName', 'username', 'role', 'class', 'isActive'], // Exclude password hash!
-      order: { createdAt: 'DESC' },
+    const users = await this.usersRepository.find({
+      select: ['id', 'fullName', 'username', 'role', 'class', 'isActive'],
+      order: { role: 'ASC', fullName: 'ASC' },
     });
+
+    const achievements = await this.achievementRepo.find({
+      relations: ['student'],
+    });
+    const activeMonth = await this.monthRepo.findOne({
+      where: { isActive: true },
+    });
+
+    // Find the most recently closed month to show "Past Month Points"
+    const pastMonth = await this.monthRepo.findOne({
+      where: { isActive: false },
+      order: { closedAt: 'DESC' },
+    });
+
+    return users.map((user) => {
+      const userAchievements = achievements.filter(
+        (a) => a.student?.id === user.id,
+      );
+
+      const totalPoints = userAchievements.reduce(
+        (sum, a) => sum + a.points,
+        0,
+      );
+      const currentMonthPoints = activeMonth
+        ? userAchievements
+            .filter((a) => a.academicMonth === activeMonth.name)
+            .reduce((sum, a) => sum + a.points, 0)
+        : 0;
+      const pastMonthPoints = pastMonth
+        ? userAchievements
+            .filter((a) => a.academicMonth === pastMonth.name)
+            .reduce((sum, a) => sum + a.points, 0)
+        : 0;
+
+      return { ...user, totalPoints, currentMonthPoints, pastMonthPoints };
+    });
+  }
+
+  // 3. Add the brand new System Report generator!
+  async getSystemReport() {
+    const studentsCount = await this.usersRepository.count({
+      where: { role: 'student' as any, isActive: true },
+    });
+    const usthadsCount = await this.usersRepository.count({
+      where: { role: 'usthad' as any, isActive: true },
+    });
+    const activePunishments = await this.punishmentRepo.count({
+      where: { status: PunishmentStatus.ACTIVE },
+    });
+
+    const achievements = await this.achievementRepo.find({
+      relations: ['student'],
+    });
+    const totalPointsAwarded = achievements.reduce(
+      (sum, a) => sum + a.points,
+      0,
+    );
+
+    // Calculate Top 5 Students
+    const studentStats: Record<
+      string,
+      { name: string; points: number; class: string }
+    > = {};
+    achievements.forEach((a) => {
+      if (!a.student) return;
+      if (!studentStats[a.student.id]) {
+        studentStats[a.student.id] = {
+          name: a.student.fullName,
+          points: 0,
+          class: a.student.class || 'N/A',
+        };
+      }
+      studentStats[a.student.id].points += a.points;
+    });
+
+    const topStudents = Object.values(studentStats)
+      .sort((a, b) => b.points - a.points)
+      .slice(0, 5);
+
+    return {
+      studentsCount,
+      usthadsCount,
+      activePunishments,
+      totalPointsAwarded,
+      topStudents,
+    };
   }
 
   // 2. Create a new user

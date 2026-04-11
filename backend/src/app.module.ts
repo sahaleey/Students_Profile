@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsthadModule } from './usthad/usthad.module';
 import { AdminModule } from './admin/admin.module';
 import { StudentModule } from './student/student.module';
+import { SubwingModule } from './subwing/subwing.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { StudentModule } from './student/student.module';
     UsthadModule,
     AdminModule,
     StudentModule,
+    SubwingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

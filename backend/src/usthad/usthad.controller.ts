@@ -8,9 +8,11 @@ import {
   Body,
   UseGuards,
   Request,
+  Req,
 } from '@nestjs/common';
 import { Request as ExpressRequest } from 'express';
 import { UsthadService } from './usthad.service';
+import { IsNull } from 'typeorm';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'; // You need to create this basic guard
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator'; // Custom decorator
@@ -25,15 +27,15 @@ interface AuthenticatedRequest extends ExpressRequest {
 
 @Controller('usthad')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.USTHAD) // ONLY Usthads can access these routes!
+@Roles(Role.USTHAD, Role.HISAN)
 export class UsthadController {
   constructor(private readonly usthadService: UsthadService) {}
 
   @Get('dashboard')
-  getDashboard() {
-    return this.usthadService.getDashboardOverview();
+  getDashboard(@Req() req: AuthenticatedRequest) {
+    return this.usthadService.getDashboardOverview(req.user.userId);
   }
-
+  @Roles(Role.USTHAD, Role.HISAN, Role.SUBWING)
   @Get('students')
   async getStudents() {
     // We are grabbing the connection directly from the service.
@@ -45,9 +47,11 @@ export class UsthadController {
     });
   }
   @Get('punishments')
-  async getPunishments() {
+  getPunishments(@Request() req: AuthenticatedRequest) {
     return this.usthadService['punishmentRepo'].find({
-      relations: ['student'], // So we can see who got punished
+      // 🚀 ONLY fetch punishments assigned by this exact Usthad
+      where: { assignedBy: { id: req.user.userId } },
+      relations: ['student'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -119,17 +123,25 @@ export class UsthadController {
 
   // We also need a route to fetch all submissions for the right column!
   @Get('attachments')
-  getAttachments() {
+  getAttachments(@Request() req: AuthenticatedRequest) {
     return this.usthadService['submissionRepo'].find({
+      where: [
+        // 🚀 Submissions tied to MY punishments
+        { targetPunishment: { assignedBy: { id: req.user.userId } } },
+        // 🚀 OR open achievement requests
+        { targetPunishment: IsNull() },
+      ],
       relations: ['student', 'targetPunishment'],
       order: { createdAt: 'DESC' },
     });
   }
   // For Remove and Get achievement
   @Get('achievements')
-  getAchievements() {
+  getAchievements(@Request() req: AuthenticatedRequest) {
     return this.usthadService['achievementRepo'].find({
-      relations: ['student'], // So we know WHO got the achievement
+      // 🚀 ONLY fetch achievements awarded by this exact Usthad
+      where: { awardedBy: { id: req.user.userId } },
+      relations: ['student'],
       order: { createdAt: 'DESC' },
     });
   }

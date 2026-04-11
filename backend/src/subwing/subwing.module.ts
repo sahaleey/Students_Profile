@@ -1,26 +1,24 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { StudentController } from './student.controller';
-import { StudentService } from './student.service';
-import { User } from '../users/entities/user.entity';
-import { Punishment } from '../usthad/entities/punishment.entity';
+import { SubwingController } from './subwing.controller';
+import { SubwingService } from './subwing.service';
+import { Program } from './entities/program.entity';
+import { ProgramResult } from './entities/program-result.entity';
 import { Achievement } from '../usthad/entities/achievement.entity';
-import { Submission } from '../usthad/entities/submission.entity';
 import { AcademicMonth } from '../admin/entities/academic-month.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      User,
-      Punishment,
+      Program,
+      ProgramResult,
       Achievement,
-      Submission,
       AcademicMonth,
     ]),
     NotificationsModule,
   ],
-  controllers: [StudentController],
-  providers: [StudentService],
+  controllers: [SubwingController],
+  providers: [SubwingService],
 })
-export class StudentModule {}
+export class SubwingModule {}

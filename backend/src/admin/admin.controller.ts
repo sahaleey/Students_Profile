@@ -54,4 +54,9 @@ export class AdminController {
   endMonth() {
     return this.adminService.endCurrentMonth();
   }
+
+  @Get('report')
+  getSystemReport() {
+    return this.adminService.getSystemReport();
+  }
 }

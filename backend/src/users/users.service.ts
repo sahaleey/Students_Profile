@@ -50,4 +50,13 @@ export class UsersService implements OnModuleInit {
     const user = await this.usersRepository.findOne({ where: { username } });
     return user ?? undefined;
   }
+
+  async findOneById(id: string): Promise<User | undefined> {
+    const user = await this.usersRepository.findOne({ where: { id } });
+    return user ?? undefined;
+  }
+
+  async updatePasswordHash(id: string, passwordHash: string): Promise<void> {
+    await this.usersRepository.update({ id }, { passwordHash });
+  }
 }

@@ -20,7 +20,6 @@ export default function VerificationInboxPage() {
   // State for points when approving achievements
   const [pointsToAward, setPointsToAward] = useState<string>("50");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [academicMonth, setAcademicMonth] = useState("Rabi al-Awwal");
 
   const getToken = () => localStorage.getItem("token");
 
@@ -258,22 +257,7 @@ export default function VerificationInboxPage() {
                     </p>
                   )}
                 </div>
-                {/* Months */}
-                <div>
-                  <label className="text-sm font-bold text-gray-700">
-                    Academic Month
-                  </label>
-                  <select
-                    value={academicMonth}
-                    onChange={(e) => setAcademicMonth(e.target.value)}
-                    className="w-full mt-1 p-2 bg-[#fafafa] border border-gray-200 rounded-lg text-black outline-none focus:border-emerald-500"
-                  >
-                    <option value="Safar">Safar</option>
-                    <option value="Rabi al-Awwal">Rabi al-Awwal</option>
-                    <option value="Rabi al-Thani">Rabi al-Thani</option>
-                    <option value="Term 1">Term 1</option>
-                  </select>
-                </div>
+
                 {/* Buttons */}
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                   <button

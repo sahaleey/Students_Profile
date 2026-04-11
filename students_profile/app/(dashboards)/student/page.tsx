@@ -236,13 +236,13 @@ export default function StudentDashboard() {
             </div>
             <div className="text-5xl font-black text-white flex items-baseline gap-2">
               {profile.points}
-              <span className="text-lg text-white/50 font-medium">/ 1000</span>
+              <span className="text-lg text-white/50 font-medium">/ 10000</span>
             </div>
             <div className="mt-3 h-2 bg-white/20 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-full transition-all duration-500"
                 style={{
-                  width: `${Math.min((profile.points / 1000) * 100, 100)}%`,
+                  width: `${Math.min((profile.points / 10000) * 100, 100)}%`,
                 }}
               />
             </div>

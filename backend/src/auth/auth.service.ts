@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common'; // 🚀 Added UnauthorizedException
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -23,35 +28,28 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  // 1. Verify credentials
   async validateUser(username: string, pass: string): Promise<any> {
     const user = await this.usersService.findOneByUsername(username);
 
-    // Rule 1: Does the user even exist?
     if (!user) {
       throw new UnauthorizedException('Invalid username or password');
     }
 
-    // 🚀 Rule 2: THE FIX - Is the user's access revoked?
-    // We explicitly check for false, so if a user has no isActive flag, it won't break.
     if (user.isActive === false) {
       throw new UnauthorizedException(
         'Access Denied: Your account has been revoked by an Admin.',
       );
     }
 
-    // Rule 3: Does the password match?
     const isPasswordValid = await bcrypt.compare(pass, user.passwordHash);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid username or password');
     }
 
-    // Success! Strip the password and return the user
     const { passwordHash: _passwordHash, ...result } = user;
     return result;
   }
 
-  // 2. Generate Token
   login(user: AuthenticatedUser) {
     const payload: JwtPayload = {
       username: user.username,
@@ -68,5 +66,56 @@ export class AuthService {
         fullName: user.fullName,
       },
     };
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+    confirmNewPassword: string,
+  ) {
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      throw new BadRequestException('All password fields are required');
+    }
+
+    if (newPassword.length < 4 || newPassword.length > 8) {
+      throw new BadRequestException(
+        'New password must be between 4 and 8 characters long',
+      );
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      throw new BadRequestException(
+        'New password and confirmation password do not match',
+      );
+    }
+
+    const user = await this.usersService.findOneById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isCurrentPasswordValid = await bcrypt.compare(
+      currentPassword,
+      user.passwordHash,
+    );
+    if (!isCurrentPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    const isSameAsOldPassword = await bcrypt.compare(
+      newPassword,
+      user.passwordHash,
+    );
+    if (isSameAsOldPassword) {
+      throw new BadRequestException(
+        'New password must be different from the current password',
+      );
+    }
+
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    await this.usersService.updatePasswordHash(userId, newPasswordHash);
+
+    return { message: 'Password changed successfully' };
   }
 }

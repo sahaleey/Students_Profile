@@ -19,6 +19,8 @@ interface User {
   role: string;
   isActive: boolean;
   class?: string; // NOTE: I changed this back to 'class' assuming your backend sends it as 'class'
+  currentMonthPoints?: number;
+  pastMonthPoints?: number;
 }
 
 export default function ManageUsers() {
@@ -148,7 +150,7 @@ export default function ManageUsers() {
                 placeholder="Search by name or username..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#004643] focus:ring-1 focus:ring-[#004643] transition-all text-sm shadow-sm"
+                className="w-full pl-10 pr-4 text-black py-2.5 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#004643] focus:ring-1 focus:ring-[#004643] transition-all text-sm shadow-sm"
               />
             </div>
 
@@ -223,25 +225,28 @@ export default function ManageUsers() {
                   <div>
                     <h3 className="font-bold text-gray-900 flex items-center gap-2">
                       {user.fullName}
-                      {!user.isActive && (
-                        <span className="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                          Access Revoked
-                        </span>
-                      )}
                     </h3>
                     <p className="text-sm text-gray-500 capitalize">
-                      <span
-                        className={
-                          user.role === "admin"
-                            ? "font-bold text-purple-700"
-                            : ""
-                        }
-                      >
-                        {user.role}
-                      </span>
-                      {user.class && ` • ${user.class}`} • ID: {user.username}
+                      {user.role} • {user.username}
                     </p>
                   </div>
+                </div>
+
+                {/* 🚀 NEW Right Side: Points Display & Button */}
+                <div className="flex items-center gap-6">
+                  {user.role === "student" && (
+                    <div className="text-right hidden sm:block">
+                      <p className="font-black text-[#004643] text-lg">
+                        {user.currentMonthPoints || 0}{" "}
+                        <span className="text-xs font-normal text-gray-500">
+                          pts (Active)
+                        </span>
+                      </p>
+                      <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mt-0.5">
+                        Past Period: {user.pastMonthPoints || 0} pts
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <button

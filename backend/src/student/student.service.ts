@@ -8,6 +8,7 @@ import {
 } from '../usthad/entities/punishment.entity';
 import { Achievement } from '../usthad/entities/achievement.entity';
 import { Submission } from '../usthad/entities/submission.entity';
+import { AcademicMonth } from '../admin/entities/academic-month.entity';
 
 @Injectable()
 export class StudentService {
@@ -19,6 +20,8 @@ export class StudentService {
     private achievementRepo: Repository<Achievement>,
     @InjectRepository(Submission)
     private submissionRepo: Repository<Submission>,
+    @InjectRepository(AcademicMonth)
+    private monthRepo: Repository<AcademicMonth>,
   ) {}
 
   async getDashboardData(userId: string) {
@@ -60,9 +63,15 @@ export class StudentService {
 
     // 🚀 3. Determine the "Current" Month and its points
     // (We assume the most recent achievement dictates the current month)
-    const currentMonthName =
-      achievements.length > 0 ? achievements[0].academicMonth : 'Term 1 - 2026';
-    const currentMonthPoints = pointsByMonth[currentMonthName] || 0;
+    const activeMonth = await this.monthRepo.findOne({
+      where: { isActive: true },
+    });
+    const currentMonthName = activeMonth
+      ? activeMonth.name
+      : 'System Paused - No Active Period';
+    const currentMonthPoints = activeMonth
+      ? pointsByMonth[activeMonth.name] || 0
+      : 0;
 
     // 🚀 4. Format the History for the frontend
     const monthlyHistory = Object.entries(pointsByMonth).map(

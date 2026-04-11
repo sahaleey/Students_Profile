@@ -14,7 +14,14 @@ import {
   ClipboardList,
   Users, // Added for Admin
   Shield,
-  Calendar, // Added for Admin
+  Calendar,
+  ClipboardListIcon,
+  TrophyIcon,
+  FileCheck2,
+  LucideTrophy,
+  Layers,
+  Key,
+  LayoutDashboardIcon, // Added for Admin
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -29,13 +36,16 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const [authUser, setAuthUser] = useState<{
     role: string | null;
-    name: string;
+    fullName: string;
+    username: string;
   }>({
     role: null,
-    name: "",
+    fullName: "",
+    username: "",
   });
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -52,8 +62,9 @@ export default function DashboardLayout({
       const user = JSON.parse(userStr);
 
       setAuthUser({
-        role: user.role || null, // 'admin', 'usthad', or 'student'
-        name: user.fullName || user.username || "User",
+        role: user.role || null,
+        fullName: user.fullName || "",
+        username: user.username || "",
       });
     } catch {
       localStorage.removeItem("user");
@@ -64,7 +75,35 @@ export default function DashboardLayout({
   }, []);
 
   const userRole = authUser.role;
-  const userName = authUser.name;
+  const userDisplayName = authUser.fullName || authUser.username || "User";
+
+  // useEffect for fetching unread notifications count (for the red dot)
+  useEffect(() => {
+    if (!isLoaded || !userRole) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:3001/notifications", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const notifs = await res.json();
+          // Filter to only count unread ones!
+          const unread = notifs.filter((n: any) => !n.isRead).length;
+          setUnreadCount(unread);
+        }
+      } catch (err) {
+        console.error("Failed to fetch notification count");
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Optional Pro-Tip: You can set an interval here to check every 30 seconds!
+    // const interval = setInterval(fetchUnreadCount, 30000);
+    // return () => clearInterval(interval);
+  }, [isLoaded, userRole, pathname]);
 
   const getInitials = (name: string) => {
     if (!name) return "U";
@@ -113,6 +152,30 @@ export default function DashboardLayout({
         { href: "/student", label: "My Portal", icon: LayoutDashboard },
         { href: "/student/tasks", label: "Action Tasks", icon: ClipboardList },
         { href: "/student/works", label: "Achievements", icon: Star },
+        {
+          href: "/student/archive",
+          label: "Program Results",
+          icon: LucideTrophy,
+        },
+      ];
+    } else if (userRole === "subwing") {
+      navItems = [
+        {
+          href: "/subwing/programs",
+          label: "Programs",
+          icon: ClipboardListIcon,
+        },
+        { href: "/subwing/results", label: "Results", icon: TrophyIcon },
+        {
+          href: "/subwing/archive",
+          label: "Published Results",
+          icon: FileCheck2,
+        },
+      ];
+    } else if (userRole === "hisan") {
+      navItems = [
+        { href: "/hisan", label: "Dashboard", icon: LayoutDashboardIcon },
+        { href: "/hisan/results", label: "Global Results", icon: Layers },
       ];
     }
   }
@@ -193,6 +256,19 @@ export default function DashboardLayout({
 
         {/* Footer */}
         <div className="p-4 border-t border-white/10">
+          <Link
+            href="/change-password"
+            onClick={closeSidebar}
+            className={`mb-2 flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-colors ${
+              pathname === "/change-password"
+                ? "bg-white/20 text-white"
+                : "text-white/70 hover:text-white hover:bg-white/10"
+            }`}
+          >
+            <Key size={18} />
+            <span className="text-sm">Change Password</span>
+          </Link>
+
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-4 py-3 w-full text-white/70 hover:text-white hover:bg-white/10 rounded-xl transition-colors"
@@ -210,28 +286,35 @@ export default function DashboardLayout({
             <div className="md:hidden w-10" />
             <div className="hidden md:block">
               <h2 className="text-sm font-medium text-[#004643]/60">
-                Welcome back,
+                Welcome,
               </h2>
               <p className="text-lg font-semibold text-[#004643] capitalize">
-                {userName || "Loading..."}
+                {userDisplayName}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            <button className="relative p-2.5 rounded-xl bg-white/80 backdrop-blur-sm text-gray-600 hover:text-[#004643] hover:bg-[#004643]/10 transition-all duration-200 shadow-sm hover:shadow">
+            {/* 🚀 The injected dynamic dropdown! */}
+            <Link
+              href="/notifications"
+              className="relative p-2.5 rounded-xl bg-white/80 backdrop-blur-sm text-gray-600 hover:text-[#004643] hover:bg-[#004643]/10 transition-all duration-200 shadow-sm hover:shadow"
+            >
               <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
-            </button>
+              {/* Optional: You can fetch unreadCount in layout.tsx to show this dot dynamically! For now, we will just show it. */}
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white border border-red-600 animate-pulse"></span>
+              )}
+            </Link>
 
             {/* Dynamic User Avatar & Name */}
             <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
               <div className="w-9 h-9 bg-gradient-to-br from-[#004643] to-[#00665e] rounded-xl flex items-center justify-center text-white font-semibold shadow-md">
-                {getInitials(userName)}
+                {getInitials(userDisplayName)}
               </div>
               <div className="hidden sm:block text-right">
                 <p className="text-sm font-medium text-[#004643] capitalize">
-                  {userName || "User"}
+                  {userDisplayName}
                 </p>
                 <p className="text-xs text-[#004643]/60 capitalize">
                   {userRole}

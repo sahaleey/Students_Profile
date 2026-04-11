@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { Punishment, PunishmentStatus } from './entities/punishment.entity';
 import { Achievement } from './entities/achievement.entity';
 import { Submission, SubmissionStatus } from './entities/submission.entity';
 import { User } from '../users/entities/user.entity';
 import { AcademicMonth } from '../admin/entities/academic-month.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 interface AssignPunishmentData {
   title: string;
@@ -31,6 +32,7 @@ export class UsthadService {
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(AcademicMonth)
     private monthRepo: Repository<AcademicMonth>,
+    private notifService: NotificationsService,
   ) {}
 
   // 1. Assign Punishment
@@ -49,7 +51,18 @@ export class UsthadService {
       student: { id: studentId },
       assignedBy: { id: usthadId },
     });
-    return this.punishmentRepo.save(punishment);
+
+    const saved = await this.punishmentRepo.save(punishment);
+    // 🚀 FIRE THE NOTIFICATION!
+    await this.notifService.sendNotification({
+      recipientId: studentId,
+      title: 'Action Required',
+      message: `You have received a new disciplinary action: ${data.title}. Please check your dashboard.`,
+      type: 'WARNING',
+      link: '/student/tasks',
+    });
+
+    return saved;
   }
 
   // 2. Grant Achievement (Points)
@@ -65,19 +78,51 @@ export class UsthadService {
       student: { id: studentId },
       academicMonth: data.academicMonth,
     });
-    return this.achievementRepo.save(achievement);
+    const saved = await this.achievementRepo.save(achievement);
+
+    // 🚀 FIRE NOTIFICATION TO STUDENT
+    await this.notifService.sendNotification({
+      recipientId: studentId,
+      title: 'New Achievement Granted!',
+      message: `You were directly awarded +${data.points} points for: ${data.title}. Keep up the great work!`,
+      type: 'SUCCESS',
+      link: '/student', // Link them to their dashboard to see the new points
+    });
+
+    return saved;
   }
 
   // 3. Get Dashboard Stats & Pending Submissions
-  async getDashboardOverview() {
-    const pendingSubmissions = await this.submissionRepo.find({
-      where: { status: SubmissionStatus.PENDING },
-      relations: ['student', 'targetPunishment'],
-      order: { createdAt: 'DESC' },
+  // Update this to accept the usthadId!
+  async getDashboardOverview(usthadId: string) {
+    // 1. Only count MY punishments
+    const punishmentsCount = await this.punishmentRepo.count({
+      where: { assignedBy: { id: usthadId } },
     });
 
-    const punishmentsCount = await this.punishmentRepo.count();
-    const achievementsCount = await this.achievementRepo.count();
+    // 2. Only count MY awarded achievements
+    const achievementsCount = await this.achievementRepo.count({
+      where: { awardedBy: { id: usthadId } },
+    });
+
+    // 3. Find pending submissions meant for ME (or open achievement requests)
+    const pendingSubmissions = await this.submissionRepo.find({
+      where: [
+        // Submissions trying to clear a punishment I assigned
+        {
+          status: SubmissionStatus.PENDING,
+          targetPunishment: { assignedBy: { id: usthadId } },
+        },
+        // OR open achievement requests (no punishment attached)
+        {
+          status: SubmissionStatus.PENDING,
+          targetPunishment: IsNull(),
+        },
+      ],
+      relations: ['student', 'targetPunishment'],
+      take: 5,
+      order: { createdAt: 'DESC' },
+    });
 
     return {
       stats: {
@@ -130,7 +175,7 @@ export class UsthadService {
         where: { id: submission.targetPunishment.id },
       });
       if (punishment) {
-        punishment.status = 'Resolved' as any;
+        punishment.status = PunishmentStatus.RESOLVED;
         await this.punishmentRepo.save(punishment);
       }
     }
@@ -155,6 +200,31 @@ export class UsthadService {
         academicMonth: currentMonth,
       });
       await this.achievementRepo.save(newAchievement);
+    }
+    let notifMessage = '';
+    let notifType = 'INFO';
+
+    if (status === 'APPROVED') {
+      if (submission.targetPunishment) {
+        notifMessage = `Your submission was approved! The punishment "${submission.targetPunishment.title}" has been cleared.`;
+        notifType = 'SUCCESS';
+      } else if (awardedPoints) {
+        notifMessage = `Your achievement request "${submission.title.split(' | ')[0]}" was approved! You earned +${awardedPoints} points.`;
+        notifType = 'SUCCESS';
+      }
+    } else if (status === 'REJECTED') {
+      notifMessage = `Your submission for "${submission.title.split(' | ')[0]}" was rejected by the Usthad. Please check and resubmit.`;
+      notifType = 'ERROR';
+    }
+
+    if (notifMessage) {
+      await this.notifService.sendNotification({
+        recipientId: submission.student.id,
+        title: `Submission ${status}`,
+        message: notifMessage,
+        type: notifType,
+        link: submission.targetPunishment ? '/student/tasks' : '/student/works',
+      });
     }
 
     return savedSubmission;

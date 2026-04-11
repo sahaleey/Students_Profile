@@ -196,7 +196,7 @@ export default function StudentTasksPage() {
                     <span className="text-gray-700">Assigned by:</span>
                     <span className="text-gray-900 font-semibold capitalize">
                       {/* 🚀 Dynamic Usthad Name! */}
-                      Usthad {task.assignedBy?.fullName || "Admin"}
+                      {task.assignedBy?.fullName || "Admin"}
                     </span>
                   </div>
                 </div>

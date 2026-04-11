@@ -39,8 +39,8 @@ export default function LoginPage() {
       if (data.user.role === "student") router.push("/student");
       else if (data.user.role === "usthad") router.push("/usthad");
       else if (data.user.role === "admin") router.push("/admin");
-      else if (data.user.role === "hisan" || data.user.role === "subwing")
-        router.push("/hisan");
+      else if (data.user.role === "hisan") router.push("/hisan");
+      else if (data.user.role === "subwing") router.push("/subwing/programs");
     } catch (err: unknown) {
       // 🚀 THE FIX: Display the exact message thrown by the backend
       const message =

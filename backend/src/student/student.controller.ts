@@ -14,6 +14,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/enums/role.enum';
 import { SubmissionStatus } from '../usthad/entities/submission.entity';
 import { PunishmentStatus } from '../usthad/entities/punishment.entity';
+import { NotificationsService } from '../notifications/notifications.service'; // 🚀 Imported
 
 interface AuthenticatedRequest extends Request {
   user: { userId: string };
@@ -23,20 +24,22 @@ interface AuthenticatedRequest extends Request {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.STUDENT) // ONLY Students can access!
 export class StudentController {
-  constructor(private readonly studentService: StudentService) {}
+  constructor(
+    private readonly studentService: StudentService,
+    private readonly notifService: NotificationsService, // 🚀 1. Injected here!
+  ) {}
 
   @Get('dashboard')
   getDashboard(@Request() req: AuthenticatedRequest) {
     return this.studentService.getDashboardData(req.user.userId);
   }
-  // Work
+
+  // --- WORKS / ACHIEVEMENTS ---
   @Post('submissions')
   async submitWork(
     @Request() req: AuthenticatedRequest,
     @Body() body: { title: string; content: string },
   ) {
-    // We format the title to hold both pieces of data temporarily,
-    // or you can add a 'content' column to your database later!
     const formattedTitle = `${body.title} | Content: ${body.content}`;
 
     const submission = this.studentService['submissionRepo'].create({
@@ -45,7 +48,20 @@ export class StudentController {
       purpose: 'STUDENT_SUBMISSION',
       status: SubmissionStatus.PENDING,
     });
-    return this.studentService['submissionRepo'].save(submission);
+
+    const savedSubmission =
+      await this.studentService['submissionRepo'].save(submission);
+
+    // 🚀 2. Notify the Student that it was received
+    await this.notifService.sendNotification({
+      recipientId: req.user.userId,
+      title: 'Submission Sent',
+      message: `Your achievement request "${body.title}" has been sent for verification.`,
+      type: 'INFO',
+      link: '/student/works',
+    });
+
+    return savedSubmission;
   }
 
   @Get('submissions')
@@ -56,13 +72,13 @@ export class StudentController {
     });
   }
 
-  //   Tasks for Punishment Clearance:
+  // --- TASKS / PUNISHMENT CLEARANCE ---
   @Get('punishments')
   async getMyPunishments(@Request() req: AuthenticatedRequest) {
     return this.studentService['punishmentRepo'].find({
       where: {
         student: { id: req.user.userId },
-        status: PunishmentStatus.ACTIVE, // ONLY fetch active punishments that need clearing!
+        status: PunishmentStatus.ACTIVE,
       },
       order: { createdAt: 'DESC' },
     });
@@ -70,23 +86,43 @@ export class StudentController {
 
   @Post('punishments/:id/submit')
   async submitPunishmentWork(
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Param('id') punishmentId: string,
     @Body() body: { title: string; content: string },
   ) {
     const formattedTitle = `${body.title} | Content: ${body.content}`;
 
-    // 1. Create the submission
+    // 1. Create the submission as normal
     const submission = this.studentService['submissionRepo'].create({
       student: { id: req.user.userId },
       targetPunishment: { id: punishmentId },
       title: formattedTitle,
-      purpose: 'STUDENT_SUBMISSION', // ✅ REQUIRED
+      purpose: 'STUDENT_SUBMISSION',
       status: SubmissionStatus.PENDING,
     });
 
-    // 2. We REMOVED the punishment.status = 'PENDING REVIEW' code entirely!
-    // Just save the submission and return.
-    return this.studentService['submissionRepo'].save(submission);
+    const savedSubmission =
+      await this.studentService['submissionRepo'].save(submission);
+
+    // 🚀 2. THE TARGETED NOTIFICATION LOGIC
+    // We must fetch the punishment and explicitly load the 'assignedBy' relation
+    const punishment = await this.studentService['punishmentRepo'].findOne({
+      where: { id: punishmentId },
+      relations: ['assignedBy'], // <-- This is the magic key!
+    });
+
+    // 3. Check if we found the punishment AND the Usthad who assigned it
+    if (punishment && punishment.assignedBy) {
+      // Send the ping ONLY to that specific Usthad's ID
+      await this.notifService.sendNotification({
+        recipientId: punishment.assignedBy.id,
+        title: 'Clearance Request 🛡️',
+        message: `A student submitted proof to clear your punishment: "${punishment.title}". Please review it.`,
+        type: 'WARNING', // Orange color to grab attention
+        link: '/usthad/attachments',
+      });
+    }
+
+    return savedSubmission;
   }
 }

@@ -21,7 +21,6 @@ export default function AchievementsPage() {
   const [step, setStep] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [academicMonth, setAcademicMonth] = useState("Rabi al-Awwal");
   const [rawStudents, setRawStudents] = useState<any[]>([]);
   const [achievements, setAchievements] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -291,22 +290,6 @@ export default function AchievementsPage() {
                     placeholder="50"
                     className="w-full mt-1 text-black p-2 bg-[#fafafa] border border-gray-200 rounded-lg outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                   />
-                </div>
-                {/* Months */}
-                <div>
-                  <label className="text-sm font-bold text-gray-700">
-                    Academic Month
-                  </label>
-                  <select
-                    value={academicMonth}
-                    onChange={(e) => setAcademicMonth(e.target.value)}
-                    className="w-full mt-1 p-2 bg-[#fafafa] border border-gray-200 rounded-lg text-black outline-none focus:border-emerald-500"
-                  >
-                    <option value="Safar">Safar</option>
-                    <option value="Rabi al-Awwal">Rabi al-Awwal</option>
-                    <option value="Rabi al-Thani">Rabi al-Thani</option>
-                    <option value="Term 1">Term 1</option>
-                  </select>
                 </div>
 
                 <button
