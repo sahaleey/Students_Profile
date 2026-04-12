@@ -22,9 +22,12 @@ export default function NotificationsPage() {
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch("http://localhost:3001/notifications", {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const res = await fetch(
+        "https://students-profile.onrender.com/notifications",
+        {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        },
+      );
       if (res.ok) {
         setNotifications(await res.json());
       }
@@ -43,7 +46,7 @@ export default function NotificationsPage() {
     e.stopPropagation(); // Prevent clicking the row if they just click the checkmark
     try {
       const res = await fetch(
-        `http://localhost:3001/notifications/${id}/read`,
+        `https://students-profile.onrender.com/notifications/${id}/read`,
         {
           method: "PATCH",
           headers: { Authorization: `Bearer ${getToken()}` },
@@ -61,10 +64,13 @@ export default function NotificationsPage() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      const res = await fetch("http://localhost:3001/notifications/read-all", {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const res = await fetch(
+        "https://students-profile.onrender.com/notifications/read-all",
+        {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${getToken()}` },
+        },
+      );
       if (res.ok) {
         setNotifications(notifications.map((n) => ({ ...n, isRead: true })));
       }
@@ -82,10 +88,13 @@ export default function NotificationsPage() {
         ),
       );
       // Tell backend in the background
-      fetch(`http://localhost:3001/notifications/${notif.id}/read`, {
-        method: "PATCH",
-        headers: { Authorization: `Bearer ${getToken()}` },
-      }).catch(console.error);
+      fetch(
+        `https://students-profile.onrender.com/notifications/${notif.id}/read`,
+        {
+          method: "PATCH",
+          headers: { Authorization: `Bearer ${getToken()}` },
+        },
+      ).catch(console.error);
     }
 
     if (notif.link) {

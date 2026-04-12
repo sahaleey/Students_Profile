@@ -37,9 +37,12 @@ export default function ManageUsers() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch("http://localhost:3001/admin/users", {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const response = await fetch(
+        "https://students-profile.onrender.com/admin/users",
+        {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        },
+      );
       if (!response.ok) throw new Error("Failed to fetch users");
       const data = await response.json();
       setUsers(data);
@@ -62,7 +65,7 @@ export default function ManageUsers() {
         ),
       );
       const response = await fetch(
-        `http://localhost:3001/admin/users/${id}/access`,
+        `https://students-profile.onrender.com/admin/users/${id}/access`,
         {
           method: "PATCH",
           headers: {

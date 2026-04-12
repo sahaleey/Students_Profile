@@ -27,9 +27,12 @@ export default function StarStudentsPage() {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const res = await fetch("http://localhost:3001/usthad/star-students", {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        });
+        const res = await fetch(
+          "https://students-profile.onrender.com/usthad/star-students",
+          {
+            headers: { Authorization: `Bearer ${getToken()}` },
+          },
+        );
         if (res.ok) {
           const payload: StarStudentsResponse = await res.json();
           setStarStudents(payload.students || []);

@@ -21,9 +21,12 @@ export default function HisanGlobalResultsPage() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const res = await fetch("http://localhost:3001/subwing/all-results", {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        });
+        const res = await fetch(
+          "https://students-profile.onrender.com/subwing/all-results",
+          {
+            headers: { Authorization: `Bearer ${getToken()}` },
+          },
+        );
         if (res.ok) setResults(await res.json());
       } catch (error) {
         console.error("Failed to fetch global results");

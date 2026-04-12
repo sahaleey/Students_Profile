@@ -17,9 +17,9 @@ import {
 export default function StudentWorksPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [myWorks, setMyWorks] = useState<any[]>([]);
-  const [usthads, setUsthads] = useState<Array<{ id: string; fullName: string }>>(
-    [],
-  );
+  const [usthads, setUsthads] = useState<
+    Array<{ id: string; fullName: string }>
+  >([]);
   const [stats, setStats] = useState({
     totalPoints: 0,
     approvedWorks: 0,
@@ -37,9 +37,12 @@ export default function StudentWorksPage() {
   const fetchMyWorks = async () => {
     try {
       const token = getToken();
-      const res = await fetch("http://localhost:3001/student/submissions", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        "https://students-profile.onrender.com/student/submissions",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (res.ok) {
         const data = await res.json();
         setMyWorks(data);
@@ -52,9 +55,12 @@ export default function StudentWorksPage() {
       }
 
       // Also fetch dashboard data to get total points
-      const dashRes = await fetch("http://localhost:3001/student/dashboard", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const dashRes = await fetch(
+        "https://students-profile.onrender.com/student/dashboard",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (dashRes.ok) {
         const dashData = await dashRes.json();
         setStats((prev) => ({ ...prev, totalPoints: dashData.profile.points }));
@@ -67,9 +73,12 @@ export default function StudentWorksPage() {
   const fetchUsthads = async () => {
     try {
       const token = getToken();
-      const res = await fetch("http://localhost:3001/student/usthads", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        "https://students-profile.onrender.com/student/usthads",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (!res.ok) return;
 
       const data = await res.json();
@@ -97,14 +106,17 @@ export default function StudentWorksPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("http://localhost:3001/student/submissions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`,
+      const res = await fetch(
+        "https://students-profile.onrender.com/student/submissions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`,
+          },
+          body: JSON.stringify(formData),
         },
-        body: JSON.stringify(formData),
-      });
+      );
 
       if (!res.ok) throw new Error("Failed to submit");
 
@@ -269,7 +281,10 @@ export default function StudentWorksPage() {
                   required
                   value={formData.targetedUsthadId}
                   onChange={(e) =>
-                    setFormData({ ...formData, targetedUsthadId: e.target.value })
+                    setFormData({
+                      ...formData,
+                      targetedUsthadId: e.target.value,
+                    })
                   }
                   className="w-full p-3 bg-white/80 backdrop-blur-sm border text-black border-gray-200 rounded-xl outline-none focus:border-[#004643] focus:ring-2 focus:ring-[#004643]/20 transition-all"
                 >

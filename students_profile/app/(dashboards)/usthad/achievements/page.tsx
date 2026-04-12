@@ -39,8 +39,12 @@ export default function AchievementsPage() {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [stuRes, achRes] = await Promise.all([
-        fetch("http://localhost:3001/usthad/students", { headers }),
-        fetch("http://localhost:3001/usthad/achievements", { headers }),
+        fetch("https://students-profile.onrender.com/usthad/students", {
+          headers,
+        }),
+        fetch("https://students-profile.onrender.com/usthad/achievements", {
+          headers,
+        }),
       ]);
 
       if (stuRes.ok) setRawStudents(await stuRes.json());
@@ -89,7 +93,7 @@ export default function AchievementsPage() {
 
     try {
       const response = await fetch(
-        "http://localhost:3001/usthad/achievements",
+        "https://students-profile.onrender.com/usthad/achievements",
         {
           method: "POST",
           headers: {
@@ -124,7 +128,7 @@ export default function AchievementsPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:3001/usthad/achievements/${id}`,
+        `https://students-profile.onrender.com/usthad/achievements/${id}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${getToken()}` },
