@@ -10,21 +10,28 @@ import { UsthadModule } from './usthad/usthad.module';
 import { AdminModule } from './admin/admin.module';
 import { StudentModule } from './student/student.module';
 import { SubwingModule } from './subwing/subwing.module';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(), // Reads the .env file
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT ?? '5432', 10),
-      username: process.env.DB_USER,
-      password: process.env.DB_PASS,
-      database: process.env.DB_NAME,
-      autoLoadEntities: true,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }), // Reads the .env file
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => {
+        const dbUrl = config.get<string>('DATABASE_URL');
+        console.log('DB connected:', !!dbUrl);
 
-      synchronize: true, // Automatically creates SQL tables for you! (Dev only)
+        return {
+          type: 'postgres',
+          url: dbUrl,
+          autoLoadEntities: true,
+          synchronize: config.get('NODE_ENV') !== 'production',
+        };
+      },
     }),
+
     UsersModule,
     AuthModule,
     UsthadModule,
