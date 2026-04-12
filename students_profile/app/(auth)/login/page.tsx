@@ -138,32 +138,6 @@ export default function LoginPage() {
                   </>
                 )}
               </button>
-
-              {/* Demo Credentials */}
-
-              <div className="mt-6 pt-4 border-t border-white/20">
-                <p className="text-xs text-[#004643]/70 text-center font-medium mb-2">
-                  Demo Credentials (from Database)
-                </p>
-                <div className="flex justify-center gap-6 text-xs">
-                  <div className="text-center">
-                    <p className="font-semibold text-[#004643]">Usthad</p>
-                    <p className="text-[#004643]/60">
-                      usthad_ahmad
-                      <br />
-                      password123
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="font-semibold text-[#004643]">Student</p>
-                    <p className="text-[#004643]/60">
-                      1042
-                      <br />
-                      password123
-                    </p>
-                  </div>
-                </div>
-              </div>
             </form>
           </div>
         </div>

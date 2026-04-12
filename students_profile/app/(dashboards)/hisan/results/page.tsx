@@ -1,11 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { History, Calendar, Trophy, Medal, Star, Layers } from "lucide-react";
+import {
+  History,
+  Calendar,
+  Trophy,
+  Medal,
+  Star,
+  Layers,
+  Search,
+} from "lucide-react";
 
 export default function HisanGlobalResultsPage() {
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const getToken = () => localStorage.getItem("token");
 
@@ -44,6 +53,9 @@ export default function HisanGlobalResultsPage() {
       new Date(b.program.createdAt).getTime() -
       new Date(a.program.createdAt).getTime(),
   );
+  const filteredArchives = programArchives.filter((archive) =>
+    archive.program.title?.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
   if (isLoading)
     return (
@@ -67,14 +79,27 @@ export default function HisanGlobalResultsPage() {
           </p>
         </div>
       </div>
+      {/* Search Bar */}
+      <div className="p-6 border-b border-gray-200 bg-gray-50">
+        <div className="relative max-w-xl">
+          <Search className="absolute left-4 top-3.5 text-gray-400" size={20} />
+          <input
+            type="text"
+            placeholder="Search by Program Name..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl outline-none focus:border-[#615fff] focus:ring-2 focus:ring-[#615fff] transition-all text-black font-medium"
+          />
+        </div>
+      </div>
 
-      {programArchives.length === 0 ? (
+      {filteredArchives.length === 0 ? (
         <p className="text-center text-gray-500 p-10 bg-white rounded-xl border border-gray-200">
           No results have been published campus-wide.
         </p>
       ) : (
         <div className="space-y-8">
-          {programArchives.map((archive) => (
+          {filteredArchives.map((archive) => (
             <div
               key={archive.program.id}
               className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden"

@@ -178,6 +178,8 @@ export default function DashboardLayout({
       navItems = [
         { href: "/hisan", label: "Dashboard", icon: LayoutDashboardIcon },
         { href: "/hisan/results", label: "Global Results", icon: Layers },
+        { href: "/hisan/points", label: "Points Directory", icon: Trophy },
+        { href: "/hisan/star-students", label: "Star Students", icon: Star },
       ];
     }
   }
@@ -191,7 +193,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#fafafa] via-white to-[#fafafa] flex relative overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-[#fafafa] via-white to-[#fafafa] flex relative overflow-hidden">
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsSidebarOpen(true)}
@@ -210,7 +212,11 @@ export default function DashboardLayout({
 
       {/* Sidebar */}
       <aside
-        className={`fixed md:relative z-50 w-72 bg-gradient-to-b from-[#004643] to-[#003634] text-white flex flex-col transform transition-all duration-300 ease-out shadow-2xl ${isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
+        className={`fixed md:relative z-50 w-72 h-screen overflow-y-auto bg-gradient-to-b from-[#004643] to-[#003634] text-white flex flex-col transform transition-all duration-300 ease-out shadow-2xl ${
+          isSidebarOpen
+            ? "translate-x-0"
+            : "-translate-x-full  md:translate-x-0"
+        }`}
       >
         {/* Header */}
         <div className="relative p-6 border-b border-white/10">

@@ -58,7 +58,7 @@ export class UsthadService {
     });
 
     const saved = await this.punishmentRepo.save(punishment);
-    // 🚀 FIRE THE NOTIFICATION!
+    // ðŸš€ FIRE THE NOTIFICATION!
     await this.notifService.sendNotification({
       recipientId: studentId,
       title: 'Action Required',
@@ -76,16 +76,22 @@ export class UsthadService {
     studentId: string,
     data: GrantAchievementData,
   ) {
+    const activeMonthRecord = await this.monthRepo.findOne({
+      where: { isActive: true },
+    });
+    const academicMonth =
+      activeMonthRecord?.name || data.academicMonth?.trim() || 'Default Term';
+
     const achievement = this.achievementRepo.create({
       title: data.title,
       points: data.points,
       awardedBy: { id: usthadId },
       student: { id: studentId },
-      academicMonth: data.academicMonth,
+      academicMonth,
     });
     const saved = await this.achievementRepo.save(achievement);
 
-    // 🚀 FIRE NOTIFICATION TO STUDENT
+    // ðŸš€ FIRE NOTIFICATION TO STUDENT
     await this.notifService.sendNotification({
       recipientId: studentId,
       title: 'New Achievement Granted!',
@@ -145,7 +151,7 @@ export class UsthadService {
     usthadId: string,
     submissionId: string,
     status: string,
-    awardedPoints?: number, // 🚀 Added optional points parameter
+    awardedPoints?: number, // ðŸš€ Added optional points parameter
   ) {
     const submission = await this.submissionRepo.findOne({
       where: { id: submissionId },
@@ -204,7 +210,7 @@ export class UsthadService {
       !submission.targetPunishment &&
       awardedPoints
     ) {
-      // 🚀 Automatically create the achievement and give the points!
+      // ðŸš€ Automatically create the achievement and give the points!
       const activeMonthRecord = await this.monthRepo.findOne({
         where: { isActive: true },
       });
@@ -298,6 +304,66 @@ export class UsthadService {
     return this.achievementRepo.remove(achievement);
   }
 
+  // Student list with computed points for current active month and lifetime
+  async getStudentsWithPoints() {
+    const students = await this.userRepo.find({
+      where: { role: Role.STUDENT, isActive: true },
+      select: ['id', 'fullName', 'username', 'class'],
+      order: { fullName: 'ASC' },
+    });
+
+    const achievements = await this.achievementRepo.find({
+      relations: ['student'],
+    });
+    const activeMonth = await this.monthRepo.findOne({
+      where: { isActive: true },
+    });
+
+    const normalizeMonth = (value?: string) =>
+      (value || '').trim().toLowerCase();
+    const activeMonthName = normalizeMonth(activeMonth?.name);
+
+    return students.map((student) => {
+      const studentAchievements = achievements.filter(
+        (a) => a.student?.id === student.id,
+      );
+
+      const totalPoints = studentAchievements.reduce(
+        (sum, a) => sum + a.points,
+        0,
+      );
+      const currentMonthPoints = activeMonth
+        ? studentAchievements
+            .filter((a) => normalizeMonth(a.academicMonth) === activeMonthName)
+            .reduce((sum, a) => sum + a.points, 0)
+        : 0;
+
+      return {
+        ...student,
+        totalPoints,
+        currentMonthPoints,
+      };
+    });
+  }
+
+  // Dedicated endpoint data for Wall of Fame view
+  async getStarStudents(minPoints = 100) {
+    const activeMonth = await this.monthRepo.findOne({
+      where: { isActive: true },
+    });
+    const students = await this.getStudentsWithPoints();
+
+    const starStudents = students
+      .filter((student) => student.currentMonthPoints >= minPoints)
+      .sort((a, b) => b.currentMonthPoints - a.currentMonthPoints);
+
+    return {
+      activeMonthName: activeMonth?.name || 'Default Term',
+      minPoints,
+      students: starStudents,
+    };
+  }
+
   // Fetch a single student's full profile for Usthad
   async getStudentProfile(studentId: string) {
     const student = await this.userRepo.findOne({
@@ -309,17 +375,30 @@ export class UsthadService {
 
     const achievements = await this.achievementRepo.find({
       where: { student: { id: studentId } },
+      order: { createdAt: 'DESC' },
     });
     const punishments = await this.punishmentRepo.find({
       where: { student: { id: studentId } },
     });
 
     const totalPoints = achievements.reduce((sum, a) => sum + a.points, 0);
+    const monthlyPointsMap = achievements.reduce(
+      (acc, achievement) => {
+        const month = (achievement.academicMonth || 'Unassigned Term').trim();
+        acc[month] = (acc[month] || 0) + achievement.points;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+    const monthlyHistory = Object.entries(monthlyPointsMap).map(
+      ([month, points]) => ({ month, points }),
+    );
+
     const activePunishments = punishments.filter(
       (p) => p.status === PunishmentStatus.ACTIVE,
     );
 
-    // 🚀 Calculate Category Statuses (Red or Green)
+    // ðŸš€ Calculate Category Statuses (Red or Green)
     // Here we define the logic. If a student has an active punishment in a category, it's RED.
     const checkStatus = (categoryName: string) => {
       const hasActive = punishments.some(
@@ -366,14 +445,12 @@ export class UsthadService {
         percentage: checkStatus('Library') === 'GREEN' ? 100 : 30,
       },
     ];
-
     return {
       profile: { ...student, totalPoints },
+      monthlyHistory,
       categories,
       activePunishments,
       recentAchievements: achievements.slice(0, 5), // Last 5 achievements
     };
   }
 }
-
-

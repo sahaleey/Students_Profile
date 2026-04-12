@@ -100,20 +100,8 @@ export default function StudentDashboard() {
 
       {/* SECTION 1: PROFILE & OVERALL STATUS */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 backdrop-blur-xl bg-white/70 rounded-2xl shadow-xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-300">
-          <div className="flex items-center gap-5">
-            <div className="relative">
-              <div className="w-24 h-24 bg-gradient-to-br from-[#004643] to-[#00665e] rounded-2xl overflow-hidden ring-4 ring-white/50 shadow-lg">
-                <img
-                  src={profile.photoUrl}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="absolute -bottom-2 -right-2 bg-emerald-500 rounded-full p-1.5 ring-2 ring-white">
-                <ShieldCheck size={12} className="text-white" />
-              </div>
-            </div>
+        <div className="lg:col-span-1 backdrop-blur-xl bg-white/70 rounded-2xl shadow-xl border border-white/50 p-6 hover:shadow-2xl transition-all duration-300 space-y-4">
+          <div className="flex items-center gap-5 text-center">
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-[#004643] capitalize">
                 {profile.name}
@@ -121,7 +109,7 @@ export default function StudentDashboard() {
               <p className="text-sm font-medium text-[#004643]/60 mt-1">
                 Ad No: {profile.admnNo}
               </p>
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center justify-center gap-2 mt-2">
                 <p className="text-xs text-[#004643]/60">
                   Class: {profile.class}
                 </p>
@@ -129,19 +117,18 @@ export default function StudentDashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 mt-6 pt-4 border-t border-gray-200/50">
-            <div className="text-center p-2 bg-white/50 rounded-xl">
-              <p className="text-2xl font-bold text-[#004643]">
+          <div className="grid grid-cols-2 gap-3 mt-4">
+            <div className="text-center p-4 bg-gradient-to-br from-white/80 to-white/40 rounded-xl shadow">
+              <p className="text-3xl font-bold text-[#004643]">
                 {profile.points}
               </p>
-              <p className="text-xs text-[#004643]/60">Total Points</p>
+              <p className="text-xs text-[#004643]/60 mt-1">Total Points</p>
             </div>
-            {/* <div className="text-center p-2 bg-white/50 rounded-xl">
-              <p className="text-2xl font-bold text-[#004643]">
-                {profile.attendance}
-              </p>
-              <p className="text-xs text-[#004643]/60">Attendance</p>
-            </div> */}
+
+            <div className="text-center p-4 bg-gradient-to-br from-emerald-100/60 to-emerald-50 rounded-xl shadow">
+              <p className="text-lg font-semibold text-emerald-700">Active</p>
+              <p className="text-xs text-emerald-600 mt-1">Status</p>
+            </div>
           </div>
         </div>
 

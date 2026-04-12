@@ -9,6 +9,7 @@ import {
   UseGuards,
   Request,
   Req,
+  Query,
 } from '@nestjs/common';
 import { Request as ExpressRequest } from 'express';
 import { UsthadService } from './usthad.service';
@@ -38,13 +39,15 @@ export class UsthadController {
   @Roles(Role.USTHAD, Role.HISAN, Role.SUBWING)
   @Get('students')
   async getStudents() {
-    // We are grabbing the connection directly from the service.
-    // Usually, you'd put this in usthad.service.ts, but we'll do it fast here:
-    return this.usthadService['userRepo'].find({
-      where: { role: Role.STUDENT, isActive: true },
-      select: ['id', 'fullName', 'username', 'class'],
-      order: { fullName: 'ASC' },
-    });
+    return this.usthadService.getStudentsWithPoints();
+  }
+
+  @Roles(Role.USTHAD, Role.HISAN, Role.SUBWING)
+  @Get('star-students')
+  getStarStudents(@Query('minPoints') minPoints?: string) {
+    const parsedMinPoints = Number(minPoints);
+    const threshold = Number.isFinite(parsedMinPoints) ? parsedMinPoints : 100;
+    return this.usthadService.getStarStudents(threshold);
   }
   @Get('punishments')
   getPunishments(@Request() req: AuthenticatedRequest) {
