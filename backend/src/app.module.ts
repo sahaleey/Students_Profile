@@ -27,7 +27,7 @@ import { ConfigService } from '@nestjs/config';
           type: 'postgres',
           url: dbUrl,
           autoLoadEntities: true,
-          synchronize: config.get('NODE_ENV') !== 'production',
+          synchronize: true,
         };
       },
     }),
