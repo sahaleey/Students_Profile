@@ -16,6 +16,26 @@ export class UsersService implements OnModuleInit {
   // 🔥 This runs automatically when NestJS starts
   async onModuleInit() {
     const userCount = await this.usersRepository.count();
+    const adminExists = await this.usersRepository.findOne({
+      where: { role: Role.ADMIN },
+    });
+
+    if (!adminExists) {
+      // Create the default admin
+      const hashedPassword = await bcrypt.hash('admin123', 10); // Default password
+      const admin = this.usersRepository.create({
+        fullName: 'System Administrator',
+        username: 'admin', // This is what you will type in the login box
+        passwordHash: hashedPassword,
+        role: Role.ADMIN,
+        isActive: true,
+      });
+
+      await this.usersRepository.save(admin);
+      console.log(
+        '✅ SYSTEM BOOTSTRAP: Default Admin created! (User: admin | Pass: admin123)',
+      );
+    }
 
     // If the database is empty, seed it!
     if (userCount === 0) {
