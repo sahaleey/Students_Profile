@@ -18,14 +18,33 @@ interface Student {
   className: string;
 }
 
+interface RawStudent {
+  id: string;
+  fullName: string;
+  username: string;
+  class: string;
+}
+
+interface Punishment {
+  id: string;
+  studentId: string;
+  student?: {
+    fullName: string;
+  };
+  title: string;
+  category: string;
+  description: string;
+  status: "ACTIVE" | "RESOLVED";
+}
+
 export default function PunishmentsPage() {
   const [step, setStep] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   // 🚀 API States
-  const [rawStudents, setRawStudents] = useState<any[]>([]);
-  const [punishments, setPunishments] = useState<any[]>([]);
+  const [rawStudents, setRawStudents] = useState<RawStudent[]>([]);
+  const [punishments, setPunishments] = useState<Punishment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 🚀 Form State

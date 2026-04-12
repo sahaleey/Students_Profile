@@ -12,16 +12,42 @@ import {
   Medal,
 } from "lucide-react";
 
+interface Student {
+  id: string;
+  fullName: string;
+  username: string;
+  class: string;
+}
+
+interface Program {
+  id: string;
+  title: string;
+  duration: string;
+  status: string;
+}
+
+interface StudentGroup {
+  className: string;
+  students: Student[];
+}
+
+interface Winner {
+  student: Student;
+  rank: string;
+  grade: string;
+  points: number | string;
+}
+
 export default function SubWingResultsPage() {
   const [step, setStep] = useState(1);
-  const [programs, setPrograms] = useState<any[]>([]);
-  const [students, setStudents] = useState<any[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
 
-  const [selectedProgram, setSelectedProgram] = useState<any | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Dynamic array of winners!
-  const [winners, setWinners] = useState<any[]>([]);
+  const [winners, setWinners] = useState<Winner[]>([]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
@@ -57,35 +83,36 @@ export default function SubWingResultsPage() {
   );
 
   // --- Step 2: Student Grouping & Filtering ---
-  const groupedStudents = students.reduce(
-    (acc, student) => {
-      const cName = student.class ? `Class ${student.class}` : "Unassigned";
-      if (!acc[cName]) acc[cName] = { className: cName, students: [] };
-      acc[cName].students.push(student);
-      return acc;
-    },
-    {} as Record<string, { className: string; students: any[] }>,
-  );
+  const groupedStudents = students.reduce<
+    Record<string, { className: string; students: Student[] }>
+  >((acc, student) => {
+    const cName = student.class ? `Class ${student.class}` : "Unassigned";
+    if (!acc[cName]) acc[cName] = { className: cName, students: [] };
+    acc[cName].students.push(student);
+    return acc;
+  }, {});
 
   const filteredStudents = Object.values(groupedStudents)
-    .map((group) => ({
-      ...group,
-      students: group.students.filter(
-        (s) =>
-          s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.username.includes(searchTerm),
-      ),
-    }))
+    .map(
+      (group): StudentGroup => ({
+        ...group,
+        students: group.students.filter(
+          (s: Student) =>
+            s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            s.username.includes(searchTerm),
+        ),
+      }),
+    )
     .filter((group) => group.students.length > 0);
 
   // --- Handlers ---
-  const handleSelectProgram = (prog: any) => {
+  const handleSelectProgram = (prog: Program) => {
     setSelectedProgram(prog);
     setSearchTerm("");
     setStep(2);
   };
 
-  const handleAddWinner = (student: any) => {
+  const handleAddWinner = (student: Student) => {
     // Prevent adding the same student twice
     if (winners.some((w) => w.student.id === student.id)) return;
 
@@ -100,9 +127,13 @@ export default function SubWingResultsPage() {
     setWinners(winners.filter((_, i) => i !== index));
   };
 
-  const handleWinnerChange = (index: number, field: string, value: any) => {
+  const handleWinnerChange = (index: number, field: string, value: string | number) => {
     const newWinners = [...winners];
-    newWinners[index][field] = value;
+    if (field === "points") {
+      newWinners[index].points = typeof value === "string" ? parseInt(value, 10) : value;
+    } else if (field === "rank" || field === "grade") {
+      (newWinners[index][field as keyof Omit<Winner, "student" | "points">] as string) = String(value);
+    }
     setWinners(newWinners);
   };
 
@@ -132,7 +163,7 @@ export default function SubWingResultsPage() {
               studentId: w.student.id,
               rank: w.rank,
               grade: w.grade,
-              points: parseInt(w.points, 10),
+              points: parseInt(String(w.points), 10),
             })),
           }),
         },
@@ -272,7 +303,7 @@ export default function SubWingResultsPage() {
                         {group.className}
                       </h3>
                       <div className="space-y-2">
-                        {group.students.map((student) => {
+                        {group.students.map((student: Student) => {
                           const isSelected = winners.some(
                             (w) => w.student.id === student.id,
                           );

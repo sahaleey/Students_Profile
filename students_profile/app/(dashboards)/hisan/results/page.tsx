@@ -11,8 +11,38 @@ import {
   Search,
 } from "lucide-react";
 
+interface Student {
+  fullName: string;
+  class: string;
+  username: string;
+}
+
+interface Program {
+  id: string;
+  title: string;
+  createdAt: string;
+  createdBy?: {
+    fullName: string;
+  };
+}
+
+interface Result {
+  id: string;
+  rank?: string;
+  grade?: string;
+  awardedPoints: number;
+  createdAt: string;
+  student?: Student;
+  program?: Program;
+}
+
+interface ProgramArchive {
+  program: Program;
+  winners: Result[];
+}
+
 export default function HisanGlobalResultsPage() {
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<Result[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -41,14 +71,14 @@ export default function HisanGlobalResultsPage() {
   const groupedResults = results.reduce(
     (acc, result) => {
       const progId = result.program?.id;
-      if (!progId) return acc;
+      if (!progId || !result.program) return acc;
       if (!acc[progId]) {
         acc[progId] = { program: result.program, winners: [] };
       }
       acc[progId].winners.push(result);
       return acc;
     },
-    {} as Record<string, { program: any; winners: any[] }>,
+    {} as Record<string, ProgramArchive>,
   );
 
   const programArchives = Object.values(groupedResults).sort(

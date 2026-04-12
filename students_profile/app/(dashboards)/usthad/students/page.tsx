@@ -4,8 +4,15 @@ import { useState, useEffect } from "react";
 import { Users, Search, GraduationCap, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
+interface Student {
+  id: string;
+  fullName: string;
+  username: string;
+  class: string;
+}
+
 export default function HisanStudentDirectory() {
-  const [students, setStudents] = useState<any[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
@@ -38,7 +45,7 @@ export default function HisanStudentDirectory() {
       acc[cName].students.push(student);
       return acc;
     },
-    {} as Record<string, { className: string; students: any[] }>,
+    {} as Record<string, { className: string; students: Student[] }>,
   );
 
   // 2. Filter by Search Term

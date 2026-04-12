@@ -17,12 +17,29 @@ interface Student {
   className: string;
 }
 
+interface RawStudent {
+  id: string;
+  fullName: string;
+  username: string;
+  class?: string;
+}
+
+interface Achievement {
+  id: string;
+  studentId: string;
+  student?: {
+    fullName: string;
+  };
+  title: string;
+  points: number;
+}
+
 export default function AchievementsPage() {
   const [step, setStep] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [rawStudents, setRawStudents] = useState<any[]>([]);
-  const [achievements, setAchievements] = useState<any[]>([]);
+  const [rawStudents, setRawStudents] = useState<RawStudent[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({

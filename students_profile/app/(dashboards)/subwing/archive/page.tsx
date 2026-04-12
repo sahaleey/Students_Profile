@@ -3,8 +3,31 @@
 import { useState, useEffect } from "react";
 import { History, Award, Calendar, Trophy, Medal, Star } from "lucide-react";
 
+interface Student {
+  fullName: string;
+  class: string;
+  username: string;
+}
+
+interface Program {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+}
+
+interface Winner {
+  id: string;
+  rank: string;
+  grade: string;
+  student: Student;
+  awardedPoints: number;
+  createdAt: string;
+  program: Program;
+}
+
 export default function SubWingArchivePage() {
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<Winner[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const getToken = () => localStorage.getItem("token");
@@ -45,10 +68,12 @@ export default function SubWingArchivePage() {
       acc[progId].winners.push(result);
       return acc;
     },
-    {} as Record<string, { program: any; winners: any[] }>,
+    {} as Record<string, { program: Program; winners: Winner[] }>,
   );
 
-  const programArchives = Object.values(groupedResults).sort(
+  const programArchives: Array<{ program: Program; winners: Winner[] }> = (
+    Object.values(groupedResults) as Array<{ program: Program; winners: Winner[] }>
+  ).sort(
     (a, b) =>
       new Date(b.program.createdAt).getTime() -
       new Date(a.program.createdAt).getTime(),
@@ -86,7 +111,7 @@ export default function SubWingArchivePage() {
             No Results Published Yet!
           </h3>
           <p className="text-gray-600">
-            Go to the 'Declare Winners' page to publish your first program
+            Go to the &apos;Declare Winners&apos; page to publish your first program
             results.
           </p>
         </div>
