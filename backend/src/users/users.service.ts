@@ -6,6 +6,14 @@ import { User } from './entities/user.entity';
 import { Role } from './enums/role.enum';
 import * as bcrypt from 'bcrypt';
 
+interface UserImportData {
+  fullName: string;
+  username: string;
+  password?: string;
+  role?: string;
+  class?: string | number;
+}
+
 @Injectable()
 export class UsersService implements OnModuleInit {
   constructor(
@@ -64,7 +72,33 @@ export class UsersService implements OnModuleInit {
       console.log('✅ Users seeded successfully! You can now log in.');
     }
   }
+  async bulkImportUsers(usersArray: UserImportData[]) {
+    const newUsers: User[] = [];
 
+    for (const userData of usersArray) {
+      // Hash a default password for everyone, e.g., 'campus123'
+      const hashedPassword = await bcrypt.hash(
+        userData.password || 'campus123',
+        10,
+      );
+
+      const user = this.usersRepository.create({
+        fullName: userData.fullName,
+        username: userData.username, // Their Admission Number
+        role: (userData.role as Role) || Role.STUDENT,
+        class: userData.class ? String(userData.class) : 'Unassigned',
+        passwordHash: hashedPassword,
+        isActive: true,
+      });
+
+      newUsers.push(user);
+    }
+
+    // Save all 200 users to the database in one massive, highly-efficient query!
+    await this.usersRepository.save(newUsers);
+
+    return { message: `Successfully imported ${newUsers.length} users!` };
+  }
   // Your existing method for the auth system
   async findOneByUsername(username: string): Promise<User | undefined> {
     const user = await this.usersRepository.findOne({ where: { username } });

@@ -59,4 +59,8 @@ export class AdminController {
   getSystemReport() {
     return this.adminService.getSystemReport();
   }
+  @Post('users/bulk')
+  async bulkImport(@Body() body: any[]) {
+    return Promise.all(body.map((user) => this.adminService.createUser(user)));
+  }
 }
