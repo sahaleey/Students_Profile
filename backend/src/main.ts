@@ -5,7 +5,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: 'https://nahj-studentsprofile.vercel.app',
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3000', // Allow frontend origin or default to localhost
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
