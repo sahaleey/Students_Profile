@@ -85,12 +85,9 @@ export default function DashboardLayout({
     const fetchUnreadCount = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(
-          "https://students-profile.onrender.com/notifications",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        const res = await fetch("http://localhost:3001/notifications", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (res.ok) {
           const notifs = await res.json();
           // Filter to only count unread ones!
@@ -139,6 +136,7 @@ export default function DashboardLayout({
           label: "System Reports",
           icon: ClipboardList,
         },
+        { href: "/admin/parents", label: "Link Parents", icon: Users },
       ];
     } else if (userRole === "usthad") {
       navItems = [
@@ -184,6 +182,9 @@ export default function DashboardLayout({
         { href: "/hisan/points", label: "Points Directory", icon: Trophy },
         { href: "/hisan/star-students", label: "Star Students", icon: Star },
       ];
+    } else if (userRole === "parent") {
+      // 🚀 NEW: Parent Navigation
+      navItems = [{ href: "/parent", label: "My Children", icon: Users }];
     }
   }
 

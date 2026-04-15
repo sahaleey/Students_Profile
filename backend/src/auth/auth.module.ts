@@ -11,7 +11,7 @@ import { PassportModule } from '@nestjs/passport';
     UsersModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'campus-super-secret-key',
+      secret: process.env.JWT_SECRET || 'asdfdscsdvrfvgrsffsdversfd',
       signOptions: { expiresIn: '1d' },
     }),
   ],

@@ -18,14 +18,11 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await fetch(
-        "https://students-profile.onrender.com/auth/login",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
-        },
-      );
+      const response = await fetch("http://localhost:3001/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
       // 🚀 THE FIX: If the response is not OK, extract the exact error message from NestJS
       if (!response.ok) {
@@ -44,6 +41,7 @@ export default function LoginPage() {
       else if (data.user.role === "admin") router.push("/admin");
       else if (data.user.role === "hisan") router.push("/hisan");
       else if (data.user.role === "subwing") router.push("/subwing/programs");
+      else if (data.user.role === "parent") router.push("/parent");
     } catch (err: unknown) {
       // 🚀 THE FIX: Display the exact message thrown by the backend
       const message =

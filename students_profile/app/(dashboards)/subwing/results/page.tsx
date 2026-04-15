@@ -58,10 +58,10 @@ export default function SubWingResultsPage() {
     const fetchData = async () => {
       try {
         const [progRes, stuRes] = await Promise.all([
-          fetch("https://students-profile.onrender.com/subwing/programs", {
+          fetch("http://localhost:3001/subwing/programs", {
             headers: { Authorization: `Bearer ${getToken()}` },
           }),
-          fetch("https://students-profile.onrender.com/usthad/students", {
+          fetch("http://localhost:3001/usthad/students", {
             headers: { Authorization: `Bearer ${getToken()}` },
           }),
         ]);
@@ -127,12 +127,19 @@ export default function SubWingResultsPage() {
     setWinners(winners.filter((_, i) => i !== index));
   };
 
-  const handleWinnerChange = (index: number, field: string, value: string | number) => {
+  const handleWinnerChange = (
+    index: number,
+    field: string,
+    value: string | number,
+  ) => {
     const newWinners = [...winners];
     if (field === "points") {
-      newWinners[index].points = typeof value === "string" ? parseInt(value, 10) : value;
+      newWinners[index].points =
+        typeof value === "string" ? parseInt(value, 10) : value;
     } else if (field === "rank" || field === "grade") {
-      (newWinners[index][field as keyof Omit<Winner, "student" | "points">] as string) = String(value);
+      (newWinners[index][
+        field as keyof Omit<Winner, "student" | "points">
+      ] as string) = String(value);
     }
     setWinners(newWinners);
   };
@@ -151,7 +158,7 @@ export default function SubWingResultsPage() {
     setIsSubmitting(true);
     try {
       const res = await fetch(
-        `https://students-profile.onrender.com/subwing/programs/${selectedProgram.id}/results`,
+        `http://localhost:3001/subwing/programs/${selectedProgram.id}/results`,
         {
           method: "POST",
           headers: {

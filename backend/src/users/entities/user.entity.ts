@@ -3,6 +3,9 @@ import {
   Column,
   PrimaryGeneratedColumn,
   CreateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
 } from 'typeorm';
 import { Role } from '../enums/role.enum';
 
@@ -16,6 +19,9 @@ export class User {
 
   @Column()
   passwordHash!: string; // We NEVER store plain text passwords
+
+  @Column({ nullable: true })
+  phone!: string;
 
   @Column({ type: 'enum', enum: Role, default: Role.STUDENT })
   role!: Role;
@@ -34,4 +40,15 @@ export class User {
 
   @CreateDateColumn()
   createdAt!: Date;
+
+  @ManyToOne(() => User, (user) => user.children, { nullable: true })
+  @JoinColumn()
+  parent!: User;
+
+  // 🚀 For Parents: Who are their children?
+  @OneToMany(() => User, (user) => user.parent)
+  children!: User[];
+
+  @Column({ nullable: true })
+  fcmToken!: string;
 }

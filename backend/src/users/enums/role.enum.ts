@@ -4,4 +4,5 @@ export enum Role {
   USTHAD = 'usthad',
   HISAN = 'hisan',
   SUBWING = 'subwing',
+  PARENT = 'parent',
 }

@@ -12,6 +12,7 @@ import { User } from '../users/entities/user.entity';
 import { Role } from '../users/enums/role.enum';
 import { AcademicMonth } from '../admin/entities/academic-month.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import * as admin from 'firebase-admin';
 
 interface AssignPunishmentData {
   title: string;
@@ -452,5 +453,24 @@ export class UsthadService {
       activePunishments,
       recentAchievements: achievements.slice(0, 5), // Last 5 achievements
     };
+  }
+  async sendPushNotification(fcmToken: string, title: string, body: string) {
+    try {
+      const payload = {
+        notification: { title, body },
+        token: fcmToken,
+      };
+
+      // 🚀 FIREBASE SENDS THE MESSAGE HERE
+      const response = await admin.messaging().send(payload);
+
+      // 🚀 THE PROOF! If it prints a messageId, it successfully left the server!
+      console.log('✅ Successfully sent message. Receipt ID:', response);
+      return true;
+    } catch (error) {
+      // If the parent uninstalled the app or blocked notifications, it fails here.
+      console.error('❌ Error sending message:', error);
+      return false;
+    }
   }
 }

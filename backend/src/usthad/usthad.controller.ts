@@ -36,7 +36,7 @@ export class UsthadController {
   getDashboard(@Req() req: AuthenticatedRequest) {
     return this.usthadService.getDashboardOverview(req.user.userId);
   }
-  @Roles(Role.USTHAD, Role.HISAN, Role.SUBWING)
+  @Roles(Role.USTHAD, Role.HISAN, Role.SUBWING, Role.ADMIN)
   @Get('students')
   async getStudents() {
     return this.usthadService.getStudentsWithPoints();

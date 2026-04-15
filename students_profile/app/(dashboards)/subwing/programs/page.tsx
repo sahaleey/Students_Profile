@@ -28,12 +28,9 @@ export default function SubWingProgramsPage() {
 
   const fetchPrograms = async () => {
     try {
-      const res = await fetch(
-        "https://students-profile.onrender.com/subwing/programs",
-        {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        },
-      );
+      const res = await fetch("http://localhost:3001/subwing/programs", {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
       if (res.ok) setPrograms(await res.json());
     } catch (error) {
       console.error("Failed to fetch programs");
@@ -49,17 +46,14 @@ export default function SubWingProgramsPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(
-        "https://students-profile.onrender.com/subwing/programs",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getToken()}`,
-          },
-          body: JSON.stringify(formData),
+      const res = await fetch("http://localhost:3001/subwing/programs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
         },
-      );
+        body: JSON.stringify(formData),
+      });
 
       if (!res.ok) throw new Error("Failed to create program");
 

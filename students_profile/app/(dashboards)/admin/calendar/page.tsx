@@ -25,12 +25,9 @@ export default function AcademicCalendarPage() {
   // 1. Fetch All Data
   const fetchData = async () => {
     try {
-      const res = await fetch(
-        "https://students-profile.onrender.com/admin/months",
-        {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        },
-      );
+      const res = await fetch("http://localhost:3001/admin/months", {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
       if (res.ok) {
         const data = await res.json();
         setMonths(data);
@@ -64,17 +61,14 @@ export default function AcademicCalendarPage() {
     setMessage({ text: "", type: "" });
 
     try {
-      const res = await fetch(
-        "https://students-profile.onrender.com/admin/months/start",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getToken()}`,
-          },
-          body: JSON.stringify({ name: newMonthName }),
+      const res = await fetch("http://localhost:3001/admin/months/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
         },
-      );
+        body: JSON.stringify({ name: newMonthName }),
+      });
 
       if (!res.ok) throw new Error("Failed to start new period");
 
@@ -106,13 +100,10 @@ export default function AcademicCalendarPage() {
     setMessage({ text: "", type: "" });
 
     try {
-      const res = await fetch(
-        "https://students-profile.onrender.com/admin/months/end",
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${getToken()}` },
-        },
-      );
+      const res = await fetch("http://localhost:3001/admin/months/end", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
 
       if (!res.ok) throw new Error("Failed to end period");
 

@@ -12,12 +12,9 @@ export default function StudentResultsPage() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const res = await fetch(
-          "https://students-profile.onrender.com/subwing/my-results",
-          {
-            headers: { Authorization: `Bearer ${getToken()}` },
-          },
-        );
+        const res = await fetch("http://localhost:3001/subwing/my-results", {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        });
         if (res.ok) setResults(await res.json());
       } catch (error) {
         console.error("Failed to fetch results");

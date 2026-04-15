@@ -56,10 +56,10 @@ export default function AchievementsPage() {
       const headers = { Authorization: `Bearer ${token}` };
 
       const [stuRes, achRes] = await Promise.all([
-        fetch("https://students-profile.onrender.com/usthad/students", {
+        fetch("http://localhost:3001/usthad/students", {
           headers,
         }),
-        fetch("https://students-profile.onrender.com/usthad/achievements", {
+        fetch("http://localhost:3001/usthad/achievements", {
           headers,
         }),
       ]);
@@ -110,7 +110,7 @@ export default function AchievementsPage() {
 
     try {
       const response = await fetch(
-        "https://students-profile.onrender.com/usthad/achievements",
+        "http://localhost:3001/usthad/achievements",
         {
           method: "POST",
           headers: {
@@ -145,7 +145,7 @@ export default function AchievementsPage() {
 
     try {
       const response = await fetch(
-        `https://students-profile.onrender.com/usthad/achievements/${id}`,
+        `http://localhost:3001/usthad/achievements/${id}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${getToken()}` },

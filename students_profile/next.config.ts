@@ -1,7 +1,13 @@
-import type { NextConfig } from "next";
+declare module "next-pwa" {
+  import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
+  type NextPWAOptions = {
+    dest?: string;
+    disable?: boolean;
+    [key: string]: unknown;
+  };
 
-export default nextConfig;
+  type WithPWA = (config?: NextConfig) => NextConfig;
+
+  export default function withPWAInit(options?: NextPWAOptions): WithPWA;
+}

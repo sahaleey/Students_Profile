@@ -72,6 +72,54 @@ export class UsersService implements OnModuleInit {
       console.log('✅ Users seeded successfully! You can now log in.');
     }
   }
+  async createParentForStudent(
+    studentId: string,
+    parentData: { fullName: string; phone: string },
+  ) {
+    const student = await this.usersRepository.findOne({
+      where: { id: studentId },
+      relations: ['parent'],
+    });
+
+    if (!student) throw new Error('Student not found');
+
+    if (student.parent) {
+      throw new Error('Student already has a parent');
+    }
+
+    if (!parentData.fullName || !parentData.phone) {
+      throw new Error('Invalid parent data');
+    }
+
+    const existingParent = await this.usersRepository.findOne({
+      where: { username: parentData.phone },
+    });
+
+    if (existingParent) {
+      throw new Error('Parent already exists');
+    }
+
+    const randomPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+    const parent = this.usersRepository.create({
+      fullName: parentData.fullName,
+      username: parentData.phone,
+      passwordHash: hashedPassword,
+      role: Role.PARENT,
+      isActive: true,
+    });
+
+    const savedParent = await this.usersRepository.save(parent);
+
+    student.parent = savedParent;
+    await this.usersRepository.save(student);
+
+    return {
+      parent: savedParent,
+      tempPassword: randomPassword, // send this securely
+    };
+  }
   async bulkImportUsers(usersArray: UserImportData[]) {
     const newUsers: User[] = [];
 

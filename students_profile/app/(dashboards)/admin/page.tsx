@@ -41,17 +41,14 @@ export default function AdminCentre() {
         : (({ class: _class, ...rest }) => rest)(formData);
 
     try {
-      const response = await fetch(
-        "https://students-profile.onrender.com/admin/users",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getToken()}`,
-          },
-          body: JSON.stringify(payload),
+      const response = await fetch("http://localhost:3001/admin/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
         },
-      );
+        body: JSON.stringify(payload),
+      });
 
       const data = await response.json();
 

@@ -37,12 +37,9 @@ export default function ManageUsers() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch(
-        "https://students-profile.onrender.com/admin/users",
-        {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        },
-      );
+      const response = await fetch("http://localhost:3001/admin/users", {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
       if (!response.ok) throw new Error("Failed to fetch users");
       const data = await response.json();
       setUsers(data);
@@ -66,7 +63,7 @@ export default function ManageUsers() {
         ),
       );
       const response = await fetch(
-        `https://students-profile.onrender.com/admin/users/${id}/access`,
+        `http://localhost:3001/admin/users/${id}/access`,
         {
           method: "PATCH",
           headers: {
@@ -107,8 +104,9 @@ export default function ManageUsers() {
   const roleWeights: Record<string, number> = {
     admin: 1,
     usthad: 2,
-    hisan: 3,
-    student: 4,
+    parent: 3,
+    hisan: 4,
+    student: 5,
   };
 
   const sortedAndFilteredUsers = [...filteredUsers].sort((a, b) => {

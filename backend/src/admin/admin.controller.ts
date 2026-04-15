@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Role } from 'src/users/enums/role.enum';
 
 @Controller('admin')
 @UseGuards(JwtAuthGuard)
@@ -62,5 +63,22 @@ export class AdminController {
   @Post('users/bulk')
   async bulkImport(@Body() body: any[]) {
     return Promise.all(body.map((user) => this.adminService.createUser(user)));
+  }
+
+  @Post('users/create-parent')
+  createParentAndLink(
+    @Body()
+    body: {
+      studentId: string;
+      parentName: string;
+      parentPhone: string;
+    },
+  ) {
+    // 🚀 Change this line to call the linking function!
+    return this.adminService.createParentAccount(body);
+  }
+  @Get('parents')
+  async getParents() {
+    return this.adminService.getAllParents();
   }
 }

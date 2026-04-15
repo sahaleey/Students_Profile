@@ -16,6 +16,8 @@ export const metadata: Metadata = {
   title: "Nahjurrashad Campus Portal",
   description:
     "A comprehensive platform for students to manage their profiles, view programs, and access resources.",
+  manifest: "/manifest.json",
+  themeColor: "#059669",
 };
 
 export default function RootLayout({

@@ -13,6 +13,7 @@ import {
   Punishment,
   PunishmentStatus,
 } from '../usthad/entities/punishment.entity';
+import { Role } from 'src/users/enums/role.enum';
 
 @Injectable()
 export class AdminService {
@@ -203,5 +204,54 @@ export class AdminService {
     active.isActive = false;
     active.closedAt = new Date();
     return this.monthRepo.save(active);
+  }
+
+  async createParentAccount(data: {
+    studentId: string;
+    parentName: string;
+    parentPhone: string;
+  }) {
+    // 1. Find the student
+    const student = await this.usersRepository.findOne({
+      where: { id: data.studentId },
+    });
+    if (!student) throw new Error('Student not found');
+
+    // 2. Check if this parent phone number already exists (maybe they have 2 kids in the school!)
+    let parent = await this.usersRepository.findOne({
+      where: { username: data.parentPhone, role: Role.PARENT },
+    });
+
+    if (!parent) {
+      // 3. If parent doesn't exist, create a new account for them
+      const hashedPassword = await bcrypt.hash('parent123', 10); // Default password for all parents
+
+      parent = this.usersRepository.create({
+        fullName: data.parentName,
+        username: data.parentPhone, // They log in with their phone number
+        phone: data.parentPhone, // We also save it in the dedicated phone column
+        passwordHash: hashedPassword,
+        role: Role.PARENT,
+        isActive: true,
+      });
+      parent = await this.usersRepository.save(parent);
+    }
+
+    // 4. Link the student to this parent
+    student.parent = parent;
+    await this.usersRepository.save(student);
+
+    return {
+      message: 'Parent linked successfully!',
+      parentLogin: data.parentPhone,
+      defaultPassword: 'parent123',
+    };
+  }
+  async getAllParents() {
+    return this.usersRepository.find({
+      where: { role: Role.PARENT },
+      relations: ['children'], // 🚀 Make sure to load the linked children!
+      order: { fullName: 'ASC' },
+    });
   }
 }

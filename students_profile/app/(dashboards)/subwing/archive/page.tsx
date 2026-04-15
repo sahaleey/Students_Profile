@@ -35,12 +35,9 @@ export default function SubWingArchivePage() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const res = await fetch(
-          "https://students-profile.onrender.com/subwing/results",
-          {
-            headers: { Authorization: `Bearer ${getToken()}` },
-          },
-        );
+        const res = await fetch("http://localhost:3001/subwing/results", {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        });
         if (res.ok) {
           setResults(await res.json());
         }
@@ -72,7 +69,10 @@ export default function SubWingArchivePage() {
   );
 
   const programArchives: Array<{ program: Program; winners: Winner[] }> = (
-    Object.values(groupedResults) as Array<{ program: Program; winners: Winner[] }>
+    Object.values(groupedResults) as Array<{
+      program: Program;
+      winners: Winner[];
+    }>
   ).sort(
     (a, b) =>
       new Date(b.program.createdAt).getTime() -
@@ -111,8 +111,8 @@ export default function SubWingArchivePage() {
             No Results Published Yet!
           </h3>
           <p className="text-gray-600">
-            Go to the &apos;Declare Winners&apos; page to publish your first program
-            results.
+            Go to the &apos;Declare Winners&apos; page to publish your first
+            program results.
           </p>
         </div>
       ) : (
