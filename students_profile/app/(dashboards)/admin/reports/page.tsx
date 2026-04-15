@@ -21,9 +21,12 @@ export default function SystemReportPage() {
   useEffect(() => {
     const fetchReport = async () => {
       try {
-        const res = await fetch("http://localhost:3001/admin/report", {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        });
+        const res = await fetch(
+          "https://students-profile.onrender.com/admin/report",
+          {
+            headers: { Authorization: `Bearer ${getToken()}` },
+          },
+        );
         if (res.ok) setReport(await res.json());
       } catch (err) {
         console.error("Failed to load report");

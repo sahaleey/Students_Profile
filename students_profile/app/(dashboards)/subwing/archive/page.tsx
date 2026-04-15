@@ -35,9 +35,12 @@ export default function SubWingArchivePage() {
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const res = await fetch("http://localhost:3001/subwing/results", {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        });
+        const res = await fetch(
+          "https://students-profile.onrender.com/subwing/results",
+          {
+            headers: { Authorization: `Bearer ${getToken()}` },
+          },
+        );
         if (res.ok) {
           setResults(await res.json());
         }

@@ -37,9 +37,12 @@ export default function StudentWorksPage() {
   const fetchMyWorks = async () => {
     try {
       const token = getToken();
-      const res = await fetch("http://localhost:3001/student/submissions", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        "https://students-profile.onrender.com/student/submissions",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (res.ok) {
         const data = await res.json();
         setMyWorks(data);
@@ -52,9 +55,12 @@ export default function StudentWorksPage() {
       }
 
       // Also fetch dashboard data to get total points
-      const dashRes = await fetch("http://localhost:3001/student/dashboard", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const dashRes = await fetch(
+        "https://students-profile.onrender.com/student/dashboard",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (dashRes.ok) {
         const dashData = await dashRes.json();
         setStats((prev) => ({ ...prev, totalPoints: dashData.profile.points }));
@@ -67,9 +73,12 @@ export default function StudentWorksPage() {
   const fetchUsthads = async () => {
     try {
       const token = getToken();
-      const res = await fetch("http://localhost:3001/student/usthads", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(
+        "https://students-profile.onrender.com/student/usthads",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       if (!res.ok) return;
 
       const data = await res.json();
@@ -97,14 +106,17 @@ export default function StudentWorksPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("http://localhost:3001/student/submissions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`,
+      const res = await fetch(
+        "https://students-profile.onrender.com/student/submissions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`,
+          },
+          body: JSON.stringify(formData),
         },
-        body: JSON.stringify(formData),
-      });
+      );
 
       if (!res.ok) throw new Error("Failed to submit");
 

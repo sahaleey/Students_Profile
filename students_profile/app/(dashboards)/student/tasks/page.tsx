@@ -35,9 +35,12 @@ export default function StudentTasksPage() {
   // 1. FETCH ACTIVE PUNISHMENTS
   const fetchTasks = async () => {
     try {
-      const res = await fetch("http://localhost:3001/student/punishments", {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const res = await fetch(
+        "https://students-profile.onrender.com/student/punishments",
+        {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        },
+      );
       if (res.ok) {
         setTasks(await res.json());
       }
@@ -59,7 +62,7 @@ export default function StudentTasksPage() {
 
     try {
       const res = await fetch(
-        `http://localhost:3001/student/punishments/${taskId}/submit`,
+        `https://students-profile.onrender.com/student/punishments/${taskId}/submit`,
         {
           method: "POST",
           headers: {

@@ -22,9 +22,12 @@ export default function AdminParentsPage() {
   const fetchParents = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch("http://localhost:3001/admin/parents", {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const res = await fetch(
+        "https://students-profile.onrender.com/admin/parents",
+        {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        },
+      );
       if (res.ok) setParents(await res.json());
     } catch (error) {
       console.error("Failed to fetch parents");

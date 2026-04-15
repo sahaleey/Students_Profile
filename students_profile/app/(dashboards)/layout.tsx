@@ -85,9 +85,12 @@ export default function DashboardLayout({
     const fetchUnreadCount = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch("http://localhost:3001/notifications", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(
+          "https://students-profile.onrender.com/notifications",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         if (res.ok) {
           const notifs = await res.json();
           // Filter to only count unread ones!

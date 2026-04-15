@@ -24,9 +24,12 @@ export default function ParentDashboard() {
     // 1. Fetch children data
     const fetchDashboard = async () => {
       try {
-        const res = await fetch("http://localhost:3001/parent/dashboard", {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        });
+        const res = await fetch(
+          "https://students-profile.onrender.com/parent/dashboard",
+          {
+            headers: { Authorization: `Bearer ${getToken()}` },
+          },
+        );
         if (res.ok) {
           const data = await res.json();
           setChildrenData(data.children);
@@ -64,14 +67,17 @@ export default function ParentDashboard() {
         if (fcmToken) {
           // 2. Send this token to your NestJS Backend!
           // The backend needs to save this string to the Parent's user row in the database
-          await fetch("http://localhost:3001/parent/device-token", {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${getToken()}`,
+          await fetch(
+            "https://students-profile.onrender.com/parent/device-token",
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${getToken()}`,
+              },
+              body: JSON.stringify({ token: fcmToken }),
             },
-            body: JSON.stringify({ token: fcmToken }),
-          });
+          );
 
           alert("Success! You will now receive live alerts on this device.");
         }
