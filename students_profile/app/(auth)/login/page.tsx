@@ -39,6 +39,27 @@ export default function LoginPage() {
 
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      try {
+        const fcmToken = await fetchFirebaseToken();
+        if (fcmToken) {
+          await fetch(
+            "https://students-profile.onrender.com/users/update-fcm-token",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${data.access_token}`, // Tell the backend who we are!
+              },
+              body: JSON.stringify({ token: fcmToken }),
+            },
+          );
+          console.log("Firebase token linked to user!");
+        }
+      } catch (fcmError) {
+        console.error("Could not register notifications:", fcmError);
+        // We don't throw an error here because we still want them to log in,
+        // even if notifications failed to register.
+      }
       await saveDeviceToken();
 
       if (data.user.role === "student") router.push("/student");
