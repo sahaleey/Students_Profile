@@ -47,7 +47,10 @@ export class UsthadService {
     studentId: string,
     data: AssignPunishmentData,
   ) {
-    const student = await this.userRepo.findOne({ where: { id: studentId } });
+    const student = await this.userRepo.findOne({
+      where: { id: studentId },
+      relations: ['parent'],
+    });
     if (!student) throw new NotFoundException('Student not found');
 
     const punishment = this.punishmentRepo.create({
@@ -59,7 +62,7 @@ export class UsthadService {
     });
 
     const saved = await this.punishmentRepo.save(punishment);
-    // ðŸš€ FIRE THE NOTIFICATION!
+    //  FIRE THE NOTIFICATION!
     await this.notifService.sendNotification({
       recipientId: studentId,
       title: 'Action Required',
@@ -67,6 +70,15 @@ export class UsthadService {
       type: 'WARNING',
       link: '/student/tasks',
     });
+    if (student.parent) {
+      await this.notifService.sendNotification({
+        recipientId: student.parent.id, // 🚀 Target the parent!
+        title: 'New Disciplinary Action',
+        message: `Your child ${student.fullName} received a disciplinary action: ${data.title}.`,
+        type: 'WARNING',
+        link: '/parent',
+      });
+    }
 
     return saved;
   }
@@ -79,6 +91,10 @@ export class UsthadService {
   ) {
     const activeMonthRecord = await this.monthRepo.findOne({
       where: { isActive: true },
+    });
+    const student = await this.userRepo.findOne({
+      where: { id: studentId },
+      relations: ['parent'],
     });
     const academicMonth =
       activeMonthRecord?.name || data.academicMonth?.trim() || 'Default Term';
@@ -100,6 +116,16 @@ export class UsthadService {
       type: 'SUCCESS',
       link: '/student', // Link them to their dashboard to see the new points
     });
+
+    if (student && student.parent) {
+      await this.notifService.sendNotification({
+        recipientId: student.parent.id,
+        title: 'Star Student! 🌟',
+        message: `Your child ${student.fullName} just earned +${data.points} points for: ${data.title}.`,
+        type: 'SUCCESS',
+        link: '/parent',
+      });
+    }
 
     return saved;
   }

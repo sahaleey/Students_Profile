@@ -28,6 +28,7 @@ import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { fetchFirebaseToken } from "@/lib/firebase";
 
 export default function DashboardLayout({
   children,
@@ -75,8 +76,54 @@ export default function DashboardLayout({
     }
   }, []);
 
+  async function saveDeviceToken() {
+    try {
+      const token = await fetchFirebaseToken();
+
+      if (!token) {
+        console.log("No FCM token received");
+        return;
+      }
+
+      const authToken = localStorage.getItem("token");
+      if (!authToken) return;
+
+      const existingToken = localStorage.getItem("fcm_token");
+
+      // ✅ CHECK FIRST
+      if (existingToken === token) {
+        console.log("Token already saved, skipping...");
+        return;
+      }
+
+      // ✅ ONLY CALL IF NEEDED
+      await fetch(
+        "https://students-profile.onrender.com/users/update-fcm-token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({ token }),
+        },
+      );
+
+      localStorage.setItem("fcm_token", token);
+
+      console.log("Token saved to DB successfully!");
+    } catch (err) {
+      console.error("Failed to save FCM token:", err);
+    }
+  }
   const userRole = authUser.role;
   const userDisplayName = authUser.fullName || authUser.username || "User";
+
+  useEffect(() => {
+    if (isLoaded && userRole) {
+      saveDeviceToken();
+    }
+  }, [isLoaded, userRole]);
 
   // useEffect for fetching unread notifications count (for the red dot)
   useEffect(() => {

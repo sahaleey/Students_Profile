@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { User, Lock, LogIn } from "lucide-react";
+import { fetchFirebaseToken } from "@/lib/firebase";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -38,6 +39,7 @@ export default function LoginPage() {
 
       localStorage.setItem("token", data.access_token);
       localStorage.setItem("user", JSON.stringify(data.user));
+      await saveDeviceToken();
 
       if (data.user.role === "student") router.push("/student");
       else if (data.user.role === "usthad") router.push("/usthad");
@@ -62,6 +64,32 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+  async function saveDeviceToken() {
+    try {
+      const token = await fetchFirebaseToken();
+
+      if (!token) {
+        console.log("No FCM token received");
+        return;
+      }
+
+      await fetch(
+        "https://students-profile.onrender.com/users/update-fcm-token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          body: JSON.stringify({ token }),
+        },
+      );
+
+      console.log("Token saved to DB successfully!");
+    } catch (err) {
+      console.error("Failed to save FCM token:", err);
+    }
+  }
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#003634] via-[#00665e] to-[#009689] flex items-center justify-center p-4">
       {/* Glassmorphism Card */}

@@ -181,6 +181,7 @@ export default function ManageUsers() {
                 <option value="admin">Admins</option>
                 <option value="usthad">Usthads</option>
                 <option value="student">Students</option>
+                <option value="parent">Parents</option>
               </select>
             </div>
 
@@ -224,6 +225,8 @@ export default function ManageUsers() {
                       <Shield size={20} />
                     ) : user.role === "student" ? (
                       <GraduationCap size={20} />
+                    ) : user.role === "parent" ? (
+                      <Users size={20} />
                     ) : (
                       <BookOpen size={20} />
                     )}
