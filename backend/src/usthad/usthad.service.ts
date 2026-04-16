@@ -229,6 +229,7 @@ export class UsthadService {
     }
     let notifMessage = '';
     let notifType = 'INFO';
+    let parentNotifMessage = '';
 
     if (status === 'APPROVED') {
       if (submission.targetPunishment) {
@@ -251,6 +252,25 @@ export class UsthadService {
         type: notifType,
         link: submission.targetPunishment ? '/student/tasks' : '/student/works',
       });
+      if (status === 'APPROVED' && parentNotifMessage) {
+        // Fetch the student again to get the parent link
+        const studentWithParent = await this.userRepo.findOne({
+          where: { id: submission.student.id },
+          relations: ['parent'],
+        });
+
+        if (studentWithParent && studentWithParent.parent) {
+          await this.notifService.sendNotification({
+            recipientId: studentWithParent.parent.id, // Target the parent!
+            title: submission.targetPunishment
+              ? 'Action Cleared! 🛡️'
+              : 'Points Earned! 🌟',
+            message: parentNotifMessage,
+            type: 'SUCCESS',
+            link: '/parent/dashboard',
+          });
+        }
+      }
     }
 
     return savedSubmission;
@@ -292,6 +312,32 @@ export class UsthadService {
     // Auto-resolve the punishment
     punishment.status = PunishmentStatus.RESOLVED;
     await this.punishmentRepo.save(punishment);
+    const studentWithParent = await this.userRepo.findOne({
+      where: { id: data.studentId },
+      relations: ['parent'],
+    });
+
+    if (studentWithParent) {
+      // 1. Notify Student
+      await this.notifService.sendNotification({
+        recipientId: data.studentId,
+        title: 'Action Cleared! 🛡️',
+        message: `Your punishment "${punishment.title}" was resolved by an Usthad's direct verification.`,
+        type: 'SUCCESS',
+        link: '/student/tasks',
+      });
+
+      // 2. Notify Parent
+      if (studentWithParent.parent) {
+        await this.notifService.sendNotification({
+          recipientId: studentWithParent.parent.id,
+          title: 'Action Cleared! 🛡️',
+          message: `Your child ${studentWithParent.fullName} cleared their disciplinary action: "${punishment.title}".`,
+          type: 'SUCCESS',
+          link: '/parent/dashboard',
+        });
+      }
+    }
 
     return submission;
   }
@@ -453,24 +499,5 @@ export class UsthadService {
       activePunishments,
       recentAchievements: achievements.slice(0, 5), // Last 5 achievements
     };
-  }
-  async sendPushNotification(fcmToken: string, title: string, body: string) {
-    try {
-      const payload = {
-        notification: { title, body },
-        token: fcmToken,
-      };
-
-      // 🚀 FIREBASE SENDS THE MESSAGE HERE
-      const response = await admin.messaging().send(payload);
-
-      // 🚀 THE PROOF! If it prints a messageId, it successfully left the server!
-      console.log('✅ Successfully sent message. Receipt ID:', response);
-      return true;
-    } catch (error) {
-      // If the parent uninstalled the app or blocked notifications, it fails here.
-      console.error('❌ Error sending message:', error);
-      return false;
-    }
   }
 }
