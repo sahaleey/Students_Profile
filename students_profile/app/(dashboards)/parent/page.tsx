@@ -55,7 +55,19 @@ export default function ParentDashboard() {
       alert("This browser does not support desktop notifications.");
       return;
     }
-
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/firebase-messaging-sw.js")
+        .then((registration) => {
+          console.log(
+            "Service Worker registered with scope:",
+            registration.scope,
+          );
+        })
+        .catch((err) => {
+          console.log("Service Worker registration failed:", err);
+        });
+    }
     try {
       const permission = await Notification.requestPermission();
       setNotificationStatus(permission);

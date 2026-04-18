@@ -30,6 +30,7 @@
     "bcrypt": "^6.0.0",
     "dotenv": "^17.4.1",
     "firebase-admin": "^13.8.0",
+    "nestjs": "^0.0.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",

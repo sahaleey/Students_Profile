@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -17,6 +17,9 @@ export const metadata: Metadata = {
   description:
     "A comprehensive platform for students to manage their profiles, view programs, and access resources.",
   manifest: "/manifest.json",
+};
+
+export const viewport: Viewport = {
   themeColor: "#059669",
 };
 
