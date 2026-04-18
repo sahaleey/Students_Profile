@@ -12,7 +12,7 @@ import {
   Trophy,
   Star,
   ClipboardList,
-  Users, // Added for Admin
+  Users,
   Shield,
   Calendar,
   ClipboardListIcon,
@@ -22,7 +22,7 @@ import {
   Layers,
   Key,
   LayoutDashboardIcon,
-  Info, // Added for Admin
+  Info,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -49,15 +49,19 @@ export default function DashboardLayout({
     fullName: "",
     username: "",
   });
-  const [isLoaded, setIsLoaded] = useState(false);
 
+  const [isLoaded, setIsLoaded] = useState(false);
+  // 🚀 THE FIX: New state to prevent UI flashes
+  const [isAuthorized, setIsAuthorized] = useState(false);
+
+  // 1. Authenticate User
   useEffect(() => {
     try {
       const userStr = localStorage.getItem("user");
 
       if (!userStr) {
         setIsLoaded(true);
-        router.push("/login"); // Uncomment this in production!
+        router.push("/login");
         return;
       }
 
@@ -74,7 +78,41 @@ export default function DashboardLayout({
     } finally {
       setIsLoaded(true);
     }
-  }, []);
+  }, [router]);
+
+  // 🚀 THE FIX: The Route Guard Bouncer
+  useEffect(() => {
+    // Don't check until we know who the user is
+    if (!isLoaded) return;
+
+    if (!authUser.role) {
+      router.push("/login");
+      return;
+    }
+
+    const role = authUser.role;
+    // Extract the first part of the URL (e.g., "/admin/users" -> "admin")
+    const pathSection = pathname.split("/")[1];
+
+    // Pages anyone logged in is allowed to see
+    const sharedRoutes = ["change-password", "notifications"];
+
+    if (
+      pathSection &&
+      pathSection !== "" &&
+      !sharedRoutes.includes(pathSection) &&
+      pathSection !== role
+    ) {
+      console.warn(
+        `Unauthorized access! Kicking ${role} out of /${pathSection}`,
+      );
+      // Use replace() so they can't use the back button to try again
+      router.replace(`/${role}`);
+    } else {
+      // Badge matches the room! Open the doors.
+      setIsAuthorized(true);
+    }
+  }, [isLoaded, authUser.role, pathname, router]);
 
   async function saveDeviceToken() {
     try {
@@ -90,13 +128,11 @@ export default function DashboardLayout({
 
       const existingToken = localStorage.getItem("fcm_token");
 
-      // ✅ CHECK FIRST
       if (existingToken === token) {
         console.log("Token already saved, skipping...");
         return;
       }
 
-      // ✅ ONLY CALL IF NEEDED
       await fetch(
         "https://students-profile.onrender.com/users/update-fcm-token",
         {
@@ -110,12 +146,12 @@ export default function DashboardLayout({
       );
 
       localStorage.setItem("fcm_token", token);
-
       console.log("Token saved to DB successfully!");
     } catch (err) {
       console.error("Failed to save FCM token:", err);
     }
   }
+
   const userRole = authUser.role;
   const userDisplayName = authUser.fullName || authUser.username || "User";
 
@@ -125,7 +161,6 @@ export default function DashboardLayout({
     }
   }, [isLoaded, userRole]);
 
-  // useEffect for fetching unread notifications count (for the red dot)
   useEffect(() => {
     if (!isLoaded || !userRole) return;
 
@@ -140,7 +175,6 @@ export default function DashboardLayout({
         );
         if (res.ok) {
           const notifs = await res.json();
-          // Filter to only count unread ones!
           const unread = notifs.filter((n: any) => !n.isRead).length;
           setUnreadCount(unread);
         }
@@ -150,10 +184,6 @@ export default function DashboardLayout({
     };
 
     fetchUnreadCount();
-
-    // Optional Pro-Tip: You can set an interval here to check every 30 seconds!
-    // const interval = setInterval(fetchUnreadCount, 30000);
-    // return () => clearInterval(interval);
   }, [isLoaded, userRole, pathname]);
 
   const getInitials = (name: string) => {
@@ -172,7 +202,6 @@ export default function DashboardLayout({
     icon: LucideIcon;
   };
 
-  // 1. REFACTORED: Clean routing logic based on roles
   let navItems: NavItem[] = [];
 
   if (isLoaded && userRole) {
@@ -233,7 +262,6 @@ export default function DashboardLayout({
         { href: "/hisan/star-students", label: "Star Students", icon: Star },
       ];
     } else if (userRole === "parent") {
-      // 🚀 NEW: Parent Navigation
       navItems = [{ href: "/parent", label: "My Children", icon: Users }];
     }
   }
@@ -246,9 +274,17 @@ export default function DashboardLayout({
     window.location.href = "/login";
   };
 
+  // 🚀 THE FIX: Render a secure loading screen until the Bouncer says it's okay
+  if (!isLoaded || !isAuthorized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#004643]">
+        <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-screen bg-gradient-to-br from-[#fafafa] via-white to-[#fafafa] flex relative overflow-hidden">
-      {/* Mobile Menu Button */}
       <button
         onClick={() => setIsSidebarOpen(true)}
         className="fixed top-4 left-4 z-50 md:hidden bg-[#004643] text-white p-2 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
@@ -256,7 +292,6 @@ export default function DashboardLayout({
         <Menu size={20} />
       </button>
 
-      {/* Overlay */}
       {isSidebarOpen && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden animate-fadeIn"
@@ -264,7 +299,6 @@ export default function DashboardLayout({
         />
       )}
 
-      {/* Sidebar */}
       <aside
         className={`fixed md:relative z-50 w-72 h-screen overflow-y-auto bg-gradient-to-b from-[#004643] to-[#003634] text-white flex flex-col transform transition-all duration-300 ease-out shadow-2xl ${
           isSidebarOpen
@@ -272,7 +306,6 @@ export default function DashboardLayout({
             : "-translate-x-full  md:translate-x-0"
         }`}
       >
-        {/* Header */}
         <div className="relative p-6 border-b border-white/10">
           <div className="absolute top-4 right-4 md:hidden">
             <button onClick={closeSidebar}>
@@ -281,7 +314,6 @@ export default function DashboardLayout({
           </div>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-              {/* Dynamic Icon based on role */}
               {userRole === "admin" ? (
                 <Shield size={20} />
               ) : (
@@ -297,7 +329,6 @@ export default function DashboardLayout({
           </div>
         </div>
 
-        {/* Nav */}
         <nav className="flex-1 p-4 space-y-1.5">
           {navItems.map((item) => {
             const isActive =
@@ -316,7 +347,6 @@ export default function DashboardLayout({
           })}
         </nav>
 
-        {/* Footer */}
         <div className="p-4 border-t border-white/10">
           <Link
             href="/change-password"
@@ -341,7 +371,6 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-30 backdrop-blur-xl bg-white/70 border-b border-gray-200/50 flex items-center justify-between px-4 md:px-8 py-3 shadow-sm">
           <div className="flex items-center gap-3">
@@ -357,19 +386,16 @@ export default function DashboardLayout({
           </div>
 
           <div className="flex items-center gap-3">
-            {/* 🚀 The injected dynamic dropdown! */}
             <Link
               href="/notifications"
               className="relative p-2.5 rounded-xl bg-white/80 backdrop-blur-sm text-gray-600 hover:text-[#004643] hover:bg-[#004643]/10 transition-all duration-200 shadow-sm hover:shadow"
             >
               <Bell size={18} />
-              {/* Optional: You can fetch unreadCount in layout.tsx to show this dot dynamically! For now, we will just show it. */}
               {unreadCount > 0 && (
                 <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white border border-red-600 animate-pulse"></span>
               )}
             </Link>
 
-            {/* Dynamic User Avatar & Name */}
             <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
               <div className="w-9 h-9 bg-gradient-to-br from-[#004643] to-[#00665e] rounded-xl flex items-center justify-center text-white font-semibold shadow-md">
                 {getInitials(userDisplayName)}
@@ -386,7 +412,6 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        {/* Page Content */}
         <div className="flex-1 overflow-y-auto p-4 md:p-8">
           <div className="animate-fadeInUp">{children}</div>
         </div>

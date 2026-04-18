@@ -42,7 +42,7 @@ export default function LoginPage() {
       try {
         const fcmToken = await fetchFirebaseToken();
         if (fcmToken) {
-          await fetch(
+          const fcmResponse = await fetch(
             "https://students-profile.onrender.com/users/update-fcm-token",
             {
               method: "POST",
@@ -53,6 +53,10 @@ export default function LoginPage() {
               body: JSON.stringify({ token: fcmToken }),
             },
           );
+          // 🚀 Force the frontend to respect the backend's response!
+          if (!fcmResponse.ok) {
+            throw new Error(`Failed to save FCM token: ${fcmResponse.status}`);
+          }
           console.log("Firebase token linked to user!");
         }
       } catch (fcmError) {
@@ -60,7 +64,6 @@ export default function LoginPage() {
         // We don't throw an error here because we still want them to log in,
         // even if notifications failed to register.
       }
-      await saveDeviceToken();
 
       if (data.user.role === "student") router.push("/student");
       else if (data.user.role === "usthad") router.push("/usthad");
@@ -85,32 +88,7 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
-  async function saveDeviceToken() {
-    try {
-      const token = await fetchFirebaseToken();
 
-      if (!token) {
-        console.log("No FCM token received");
-        return;
-      }
-
-      await fetch(
-        "https://students-profile.onrender.com/users/update-fcm-token",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({ token }),
-        },
-      );
-
-      console.log("Token saved to DB successfully!");
-    } catch (err) {
-      console.error("Failed to save FCM token:", err);
-    }
-  }
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#003634] via-[#00665e] to-[#009689] flex items-center justify-center p-4">
       {/* Glassmorphism Card */}
