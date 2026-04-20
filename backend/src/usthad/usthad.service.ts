@@ -24,6 +24,7 @@ interface GrantAchievementData {
   title: string;
   points: number;
   academicMonth?: string;
+  isSpecialHighlight?: boolean;
 }
 
 @Injectable()
@@ -88,7 +89,14 @@ export class UsthadService {
     usthadId: string,
     studentId: string,
     data: GrantAchievementData,
+    isSpecialHighlight?: boolean,
   ) {
+    // 🚀 THE FIX: Enforce point limits
+    if (data.points < 1 || data.points > 20) {
+      throw new ForbiddenException(
+        'Points must be between 1 and 20 per achievement.',
+      );
+    }
     const activeMonthRecord = await this.monthRepo.findOne({
       where: { isActive: true },
     });
@@ -105,6 +113,7 @@ export class UsthadService {
       awardedBy: { id: usthadId },
       student: { id: studentId },
       academicMonth,
+      isSpecialHighlight: data.isSpecialHighlight ?? false,
     });
     const saved = await this.achievementRepo.save(achievement);
 
@@ -491,10 +500,10 @@ export class UsthadService {
       },
       {
         id: 2,
-        title: 'Mosque',
-        status: checkStatus('Mosque Attendance'),
+        title: 'Masjid',
+        status: checkStatus('Masjid Attendance'),
         description: 'Prayer punctuality',
-        percentage: checkStatus('Mosque Attendance') === 'GREEN' ? 100 : 30,
+        percentage: checkStatus('Masjid Attendance') === 'GREEN' ? 100 : 30,
       },
       {
         id: 3,
@@ -525,5 +534,53 @@ export class UsthadService {
       activePunishments,
       recentAchievements: achievements.slice(0, 5), // Last 5 achievements
     };
+  }
+
+  async getLatestSpecialHighlight() {
+    const highlight = await this.achievementRepo.findOne({
+      where: { isSpecialHighlight: true },
+      relations: ['student', 'awardedBy'],
+      order: { createdAt: 'DESC' },
+    });
+
+    if (!highlight) return null;
+
+    // We only send exactly what the frontend needs
+    return {
+      title: highlight.title,
+      points: highlight.points,
+      studentName: highlight.student.fullName,
+      awardedBy: highlight.awardedBy.fullName,
+      date: highlight.createdAt,
+    };
+  }
+
+  // Fetch all students with their RED/GREEN disciplinary status
+  async getClassReport() {
+    // 1. Fetch all active students
+    const students = await this.userRepo.find({
+      where: { role: Role.STUDENT, isActive: true },
+      select: ['id', 'fullName', 'username', 'class'],
+      order: { class: 'ASC', fullName: 'ASC' }, // Sort by class first!
+    });
+
+    // 2. Fetch ALL active punishments in one go
+    const activePunishments = await this.punishmentRepo.find({
+      where: { status: PunishmentStatus.ACTIVE },
+      relations: ['student'],
+    });
+
+    // 3. Map the RED/GREEN status efficiently
+    return students.map((student) => {
+      // If the student's ID appears in the active punishments list, they are RED!
+      const hasActivePunishment = activePunishments.some(
+        (p) => p.student?.id === student.id,
+      );
+
+      return {
+        ...student,
+        status: hasActivePunishment ? 'RED' : 'GREEN',
+      };
+    });
   }
 }

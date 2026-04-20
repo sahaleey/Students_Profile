@@ -46,7 +46,6 @@ export default function ManageUsers() {
       if (!response.ok) throw new Error("Failed to fetch users");
       const data = await response.json();
       setUsers(data);
-      console.log(getToken());
     } catch (err) {
       console.error(err);
     } finally {

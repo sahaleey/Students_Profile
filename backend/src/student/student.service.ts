@@ -104,10 +104,10 @@ export class StudentService {
       },
       {
         id: 2,
-        title: 'Mosque',
-        status: checkStatus('Mosque Attendance'),
+        title: 'Masjid',
+        status: checkStatus('Masjid Attendance'),
         description: 'Prayer punctuality',
-        percentage: checkStatus('Mosque Attendance') === 'GREEN' ? 100 : 30,
+        percentage: checkStatus('Masjid Attendance') === 'GREEN' ? 100 : 30,
       },
       {
         id: 3,

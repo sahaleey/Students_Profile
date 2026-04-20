@@ -12,13 +12,10 @@ import { PassportModule } from '@nestjs/passport';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'asdfdscsdvrfvgrsffsdversfd',
-      signOptions: { expiresIn: '3d' },
+      signOptions: { expiresIn: '30d' },
     }),
   ],
-  providers: [
-    AuthService,
-    JwtStrategy, // 🔥 THIS WAS MISSING
-  ],
+  providers: [AuthService, JwtStrategy],
   controllers: [AuthController],
   exports: [JwtModule, PassportModule],
 })

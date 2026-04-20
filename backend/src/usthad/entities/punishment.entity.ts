@@ -22,7 +22,7 @@ export class Punishment {
   title!: string;
 
   @Column()
-  category!: string; // e.g., 'Public Behavior', 'Mosque'
+  category!: string; // e.g., 'Public Behavior', 'Masjid'
 
   @Column('text')
   description!: string;

@@ -86,6 +86,7 @@ export class UsthadController {
       title: string;
       points: number;
       academicMonth?: string;
+      isSpecialHighlight?: boolean;
     },
   ) {
     return this.usthadService.grantAchievement(
@@ -174,5 +175,22 @@ export class UsthadController {
   @Get('students/:id')
   getStudentProfile(@Param('id') id: string) {
     return this.usthadService.getStudentProfile(id);
+  }
+
+  @Get('special-highlight')
+  @Roles(
+    Role.STUDENT,
+    Role.USTHAD,
+    Role.HISAN,
+    Role.SUBWING,
+    Role.PARENT,
+    Role.ADMIN,
+  )
+  async getSpecialHighlight() {
+    return this.usthadService.getLatestSpecialHighlight();
+  }
+  @Get('class-report')
+  getClassReport() {
+    return this.usthadService.getClassReport();
   }
 }

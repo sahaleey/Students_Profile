@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { User, Lock, LogIn } from "lucide-react";
 import { fetchFirebaseToken } from "@/lib/firebase";
@@ -12,6 +12,28 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const userStr = localStorage.getItem("user");
+
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        // Instantly route them back to their specific dashboard!
+        if (user.role === "student") router.replace("/student");
+        else if (user.role === "usthad") router.replace("/usthad");
+        else if (user.role === "admin") router.replace("/admin");
+        else if (user.role === "hisan") router.replace("/hisan");
+        else if (user.role === "subwing") router.replace("/subwing/programs");
+        else if (user.role === "parent") router.replace("/parent");
+      } catch (err) {
+        // If the JSON is corrupted somehow, clear it and force login
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
+    }
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();

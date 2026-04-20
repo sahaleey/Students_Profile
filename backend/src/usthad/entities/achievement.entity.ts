@@ -31,4 +31,7 @@ export class Achievement {
 
   @CreateDateColumn()
   createdAt!: Date;
+
+  @Column({ default: false })
+  isSpecialHighlight!: boolean;
 }

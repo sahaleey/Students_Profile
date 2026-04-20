@@ -341,7 +341,7 @@ export default function PunishmentsPage() {
                     <option value="Academics">Academics</option>
                     <option value="Computer Lab">Computer Lab</option>
                     <option value="Library">Library</option>
-                    <option value="Mosque Attendance">Mosque Attendance</option>
+                    <option value="Masjid Attendance">Masjid Attendance</option>
                   </select>
                 </div>
 

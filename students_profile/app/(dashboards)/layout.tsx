@@ -39,6 +39,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [specialHighlight, setSpecialHighlight] = useState<any>(null);
 
   const [authUser, setAuthUser] = useState<{
     role: string | null;
@@ -164,26 +165,51 @@ export default function DashboardLayout({
   useEffect(() => {
     if (!isLoaded || !userRole) return;
 
-    const fetchUnreadCount = async () => {
+    const fetchDashboardGlobals = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(
+
+        // Fetch Unread Notifications
+        const notifRes = await fetch(
           "https://students-profile.onrender.com/notifications",
           {
             headers: { Authorization: `Bearer ${token}` },
           },
         );
-        if (res.ok) {
-          const notifs = await res.json();
-          const unread = notifs.filter((n: any) => !n.isRead).length;
-          setUnreadCount(unread);
+        if (notifRes.ok) {
+          let notifs = [];
+          try {
+            const text = await notifRes.text();
+            notifs = text ? JSON.parse(text) : [];
+          } catch (e) {
+            console.error("Invalid notifications JSON");
+          }
+          setUnreadCount(notifs.filter((n: any) => !n.isRead).length);
+        }
+
+        // 🚀 Fetch Global Special Highlight
+        const highlightRes = await fetch(
+          "https://students-profile.onrender.com/usthad/special-highlight",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+        if (highlightRes.ok) {
+          try {
+            const text = await highlightRes.text();
+            const data = text ? JSON.parse(text) : null;
+            setSpecialHighlight(data);
+          } catch (e) {
+            console.error("Invalid highlight JSON");
+            setSpecialHighlight(null);
+          }
         }
       } catch (err) {
-        console.error("Failed to fetch notification count");
+        console.error(err);
       }
     };
 
-    fetchUnreadCount();
+    fetchDashboardGlobals();
   }, [isLoaded, userRole, pathname]);
 
   const getInitials = (name: string) => {
@@ -228,6 +254,7 @@ export default function DashboardLayout({
         { href: "/usthad/attachments", label: "Attachments", icon: FileCheck },
         { href: "/usthad/achievements", label: "Achievements", icon: Trophy },
         { href: "/usthad/students", label: "Students Status", icon: Info },
+        { href: "/usthad/class-report", label: "Class Reports", icon: Users },
       ];
     } else if (userRole === "student") {
       navItems = [
@@ -411,6 +438,43 @@ export default function DashboardLayout({
             </div>
           </div>
         </header>
+
+        {/* 🌟 THE GLOBAL SPOTLIGHT BANNER 🌟 */}
+        {/* We check if it exists, AND we ensure the user is NOT an admin */}
+        {specialHighlight && userRole !== "admin" && (
+          <div className="mx-4 md:mx-8 mt-6 mb-2 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-600 rounded-2xl shadow-xl p-1 relative overflow-hidden group">
+            {/* Animated background shine */}
+            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+
+            <div className="bg-white/95 backdrop-blur-xl rounded-xl p-4 md:p-6 flex items-center justify-between relative z-10">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 text-amber-600 font-bold text-xs mb-1 uppercase tracking-wider">
+                  <Star size={14} className="fill-amber-500 animate-pulse" />
+                  Campus Spotlight
+                </div>
+                <h2 className="text-xl md:text-2xl font-black text-gray-900 capitalize">
+                  {specialHighlight.studentName}
+                </h2>
+                <p className="text-sm md:text-base text-gray-700 font-medium mt-1">
+                  Recognized for:{" "}
+                  <span className="font-bold text-[#004643]">
+                    {specialHighlight.title}
+                  </span>
+                  <span className="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
+                    +{specialHighlight.points} pts
+                  </span>
+                </p>
+              </div>
+
+              <div className="hidden sm:flex flex-col items-end pl-4 border-l border-gray-200">
+                <Trophy size={40} className="text-amber-500 mb-1" />
+                <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                  Awarded by {specialHighlight.awardedBy}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto p-4 md:p-8">
           <div className="animate-fadeInUp">{children}</div>
