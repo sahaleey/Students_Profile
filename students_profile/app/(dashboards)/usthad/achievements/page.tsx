@@ -41,6 +41,9 @@ export default function AchievementsPage() {
   const [rawStudents, setRawStudents] = useState<RawStudent[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSpecialHighlight, setIsSpecialHighlight] = useState(false);
+  const [title, setTitle] = useState("");
+  const [points, setPoints] = useState("");
 
   const [formData, setFormData] = useState({
     title: "", // The work completed
@@ -120,7 +123,8 @@ export default function AchievementsPage() {
           body: JSON.stringify({
             studentId: selectedStudent.id,
             title: formData.title,
-            points: parseInt(formData.points, 10), // Convert string to number!
+            points: parseInt(formData.points, 10),
+            isSpecialHighlight: isSpecialHighlight,
           }),
         },
       );
@@ -311,6 +315,30 @@ export default function AchievementsPage() {
                     placeholder="50"
                     className="w-full mt-1 text-black p-2 bg-[#fafafa] border border-gray-200 rounded-lg outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                   />
+                </div>
+                {/* 🚀 Special Highlight Toggle */}
+                <div className="flex items-start gap-3 bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-xl border border-amber-200 mt-4 transition-all hover:shadow-md">
+                  <div className="pt-0.5">
+                    <input
+                      type="checkbox"
+                      id="specialHighlight"
+                      checked={isSpecialHighlight}
+                      onChange={(e) => setIsSpecialHighlight(e.target.checked)}
+                      className="w-5 h-5 text-amber-600 bg-white border-amber-300 rounded focus:ring-amber-500 focus:ring-2 cursor-pointer"
+                    />
+                  </div>
+                  <label
+                    htmlFor="specialHighlight"
+                    className="flex flex-col cursor-pointer select-none"
+                  >
+                    <span className="font-bold text-amber-900 text-sm flex items-center gap-1">
+                      Mark as Special Highlight
+                    </span>
+                    <span className="text-xs text-amber-700/80 mt-0.5 leading-relaxed">
+                      This will feature the student on all over the Campus
+                      Dashboard until the end of the month!
+                    </span>
+                  </label>
                 </div>
 
                 <button

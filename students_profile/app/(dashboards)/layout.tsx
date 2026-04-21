@@ -23,6 +23,7 @@ import {
   Key,
   LayoutDashboardIcon,
   Info,
+  Sparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -442,35 +443,84 @@ export default function DashboardLayout({
         {/* 🌟 THE GLOBAL SPOTLIGHT BANNER 🌟 */}
         {/* We check if it exists, AND we ensure the user is NOT an admin */}
         {specialHighlight && userRole !== "admin" && (
-          <div className="mx-4 md:mx-8 mt-6 mb-2 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-600 rounded-2xl shadow-xl p-1 relative overflow-hidden group">
-            {/* Animated background shine */}
-            <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 transform -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+          <div className="mx-4 md:mx-8 mt-6 mb-2 relative group">
+            {/* Animated gradient border */}
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-600 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-500 animate-pulse"></div>
 
-            <div className="bg-white/95 backdrop-blur-xl rounded-xl p-4 md:p-6 flex items-center justify-between relative z-10">
-              <div className="flex-1">
-                <div className="flex items-center gap-2 text-amber-600 font-bold text-xs mb-1 uppercase tracking-wider">
-                  <Star size={14} className="fill-amber-500 animate-pulse" />
-                  Campus Spotlight
+            {/* Main card */}
+            <div className="relative bg-gradient-to-br from-white/95 to-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden">
+              {/* Animated shine effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-yellow-400/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+
+              {/* Decorative corner accents */}
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-yellow-400/20 to-transparent rounded-bl-2xl"></div>
+              <div className="absolute bottom-0 left-0 w-20 h-20 bg-gradient-to-tr from-amber-500/20 to-transparent rounded-tr-2xl"></div>
+
+              <div className="p-4 md:p-6 relative z-10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  {/* Left content */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="relative">
+                        <Star
+                          size={16}
+                          className="text-yellow-500 fill-yellow-500 animate-pulse"
+                        />
+                        <div className="absolute inset-0 bg-yellow-400 blur-md opacity-50 animate-ping"></div>
+                      </div>
+                      <span className="text-xs font-bold text-amber-600 uppercase tracking-wider bg-amber-50 px-2 py-0.5 rounded-full">
+                        Campus Spotlight
+                      </span>
+                      <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full animate-pulse">
+                        Featured
+                      </span>
+                    </div>
+
+                    <h2 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent capitalize">
+                      {specialHighlight.studentName}
+                    </h2>
+
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <p className="text-sm md:text-base text-gray-600 font-medium">
+                        Recognized for:
+                      </p>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-[#004643]/10 to-[#00665e]/10 rounded-full border border-[#004643]/20">
+                        <span className="font-bold text-[#004643] text-sm">
+                          Work: {specialHighlight.title}
+                        </span>
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full shadow-md">
+                        <Trophy size={12} className="text-white" />
+                        <span className="text-xs font-black text-white">
+                          +{specialHighlight.points} pts
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Right content - Award badge */}
+                  <div className="flex items-center gap-3 sm:pl-4 sm:border-l-2 border-gradient-to-b from-yellow-400 to-amber-500">
+                    <div className="relative">
+                      <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-xl flex items-center justify-center shadow-lg transform rotate-3 group-hover:rotate-6 transition-transform duration-300">
+                        <Trophy size={24} className="text-white" />
+                      </div>
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full ring-2 ring-white"></div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
+                        Awarded by
+                      </p>
+                      <p className="text-sm font-bold text-gray-700 capitalize">
+                        {specialHighlight.awardedBy}
+                      </p>
+                      <div className="flex items-center gap-1 justify-end mt-0.5">
+                        <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div>
+                        <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
+                        <div className="w-1.5 h-1.5 bg-yellow-600 rounded-full"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <h2 className="text-xl md:text-2xl font-black text-gray-900 capitalize">
-                  {specialHighlight.studentName}
-                </h2>
-                <p className="text-sm md:text-base text-gray-700 font-medium mt-1">
-                  Recognized for:{" "}
-                  <span className="font-bold text-[#004643]">
-                    {specialHighlight.title}
-                  </span>
-                  <span className="ml-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md">
-                    +{specialHighlight.points} pts
-                  </span>
-                </p>
-              </div>
-
-              <div className="hidden sm:flex flex-col items-end pl-4 border-l border-gray-200">
-                <Trophy size={40} className="text-amber-500 mb-1" />
-                <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">
-                  Awarded by {specialHighlight.awardedBy}
-                </p>
               </div>
             </div>
           </div>

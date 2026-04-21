@@ -89,7 +89,6 @@ export class UsthadService {
     usthadId: string,
     studentId: string,
     data: GrantAchievementData,
-    isSpecialHighlight?: boolean,
   ) {
     // 🚀 THE FIX: Enforce point limits
     if (data.points < 1 || data.points > 20) {
@@ -537,15 +536,26 @@ export class UsthadService {
   }
 
   async getLatestSpecialHighlight() {
+    // A. Find what the current active month is
+    const activeMonth = await this.monthRepo.findOne({
+      where: { isActive: true },
+    });
+
+    // If there is no active month, there can be no active highlight!
+    if (!activeMonth) return null;
+
+    // B. Search ONLY for special highlights in this specific month
     const highlight = await this.achievementRepo.findOne({
-      where: { isSpecialHighlight: true },
+      where: {
+        isSpecialHighlight: true,
+        academicMonth: activeMonth.name, // 🚀 This makes it expire when the month ends!
+      },
       relations: ['student', 'awardedBy'],
-      order: { createdAt: 'DESC' },
+      order: { createdAt: 'DESC' }, // 🚀 This prevents it from being "sticky" forever
     });
 
     if (!highlight) return null;
 
-    // We only send exactly what the frontend needs
     return {
       title: highlight.title,
       points: highlight.points,
