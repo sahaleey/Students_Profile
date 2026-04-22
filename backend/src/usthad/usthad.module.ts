@@ -8,6 +8,8 @@ import { Submission } from './entities/submission.entity';
 import { User } from '../users/entities/user.entity';
 import { AcademicMonth } from '../admin/entities/academic-month.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { Arrival } from './entities/arrival.entity';
+import { ArrivalSession } from 'src/admin/entities/arrival-session.entity';
 
 @Module({
   // 🚀 THIS IS THE CRUCIAL PART
@@ -17,7 +19,9 @@ import { NotificationsModule } from '../notifications/notifications.module';
       Achievement,
       Submission,
       User,
+      Arrival,
       AcademicMonth,
+      ArrivalSession,
     ]),
     NotificationsModule,
   ],

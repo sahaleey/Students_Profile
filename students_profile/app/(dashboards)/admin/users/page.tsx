@@ -106,9 +106,11 @@ export default function ManageUsers() {
   const roleWeights: Record<string, number> = {
     admin: 1,
     usthad: 2,
-    parent: 3,
-    hisan: 4,
-    student: 5,
+    staff: 3,
+    parent: 4,
+    hisan: 5,
+    subwing: 6,
+    student: 7,
   };
 
   const sortedAndFilteredUsers = [...filteredUsers].sort((a, b) => {
@@ -178,6 +180,7 @@ export default function ManageUsers() {
               >
                 <option value="all">All Roles</option>
                 <option value="admin">Admins</option>
+                <option value="staff">Staff</option>
                 <option value="usthad">Usthads</option>
                 <option value="student">Students</option>
                 <option value="parent">Parents</option>

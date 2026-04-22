@@ -13,6 +13,8 @@ interface AuthenticatedUser {
   username: string;
   role: string;
   fullName: string;
+  class?: string;
+  department?: string;
 }
 
 interface JwtPayload {
@@ -64,6 +66,8 @@ export class AuthService {
         username: user.username,
         role: user.role,
         fullName: user.fullName,
+        class: user.class,
+        department: user.department,
       },
     };
   }

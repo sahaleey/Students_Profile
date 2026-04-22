@@ -14,6 +14,8 @@ import {
   PunishmentStatus,
 } from '../usthad/entities/punishment.entity';
 import { Role } from 'src/users/enums/role.enum';
+import { ArrivalSession } from './entities/arrival-session.entity';
+import { Arrival } from '../usthad/entities/arrival.entity';
 
 @Injectable()
 export class AdminService {
@@ -22,9 +24,12 @@ export class AdminService {
     @InjectRepository(AcademicMonth)
     private monthRepo: Repository<AcademicMonth>,
     @InjectRepository(Achievement)
-    private achievementRepo: Repository<Achievement>, // 🚀 Added
+    private achievementRepo: Repository<Achievement>,
     @InjectRepository(Punishment)
-    private punishmentRepo: Repository<Punishment>, // 🚀 Added
+    private punishmentRepo: Repository<Punishment>,
+    @InjectRepository(ArrivalSession)
+    private sessionRepo: Repository<ArrivalSession>,
+    @InjectRepository(Arrival) private arrivalRepo: Repository<Arrival>,
   ) {}
 
   // 1. Get all users
@@ -91,41 +96,71 @@ export class AdminService {
       0,
     );
 
-    // Calculate Top 5 Students
+    // 🚀 1. Find the currently active academic month
+    const activeMonth = await this.monthRepo.findOne({
+      where: { isActive: true },
+    });
+    const activeMonthName = activeMonth ? activeMonth.name : 'Default Term';
+
+    // 🚀 2. Calculate both All-Time and Monthly points for each student
     const studentStats: Record<
       string,
-      { name: string; points: number; class: string }
+      {
+        name: string;
+        points: number;
+        currentMonthPoints: number;
+        class: string;
+      }
     > = {};
+
     achievements.forEach((a) => {
       if (!a.student) return;
+
       if (!studentStats[a.student.id]) {
         studentStats[a.student.id] = {
           name: a.student.fullName,
           points: 0,
+          currentMonthPoints: 0,
           class: a.student.class || 'N/A',
         };
       }
+
+      // Add to All-Time points
       studentStats[a.student.id].points += a.points;
+
+      // Add to Monthly points IF the achievement matches the active month
+      if (a.academicMonth === activeMonthName) {
+        studentStats[a.student.id].currentMonthPoints += a.points;
+      }
     });
 
+    // 🚀 3. Sort for All-Time Top 5
     const topStudents = Object.values(studentStats)
       .sort((a, b) => b.points - a.points)
       .slice(0, 5);
+
+    // 🚀 4. Sort for Monthly Top 10 (Filtering out students with 0 points this month)
+    const topStudentsMonth = Object.values(studentStats)
+      .filter((s) => s.currentMonthPoints > 0)
+      .sort((a, b) => b.currentMonthPoints - a.currentMonthPoints)
+      .slice(0, 10);
 
     return {
       studentsCount,
       usthadsCount,
       activePunishments,
       totalPointsAwarded,
-      topStudents,
+      activeMonthName, // Sent to frontend for the Banner
+      topStudents, // All-Time Top 5
+      topStudentsMonth, // Monthly Top 10
     };
   }
-
   // 2. Create a new user
   async createUser(data: {
     fullName: string;
     username: string;
     class?: string;
+    department?: string;
     role: User['role'];
     password: string;
   }) {
@@ -147,6 +182,7 @@ export class AdminService {
       username: data.username,
       role: data.role,
       passwordHash: hashedPassword,
+      department: data.department,
       isActive: true,
 
       // Keep type-compatible with User entity (`string | undefined`)
@@ -253,5 +289,65 @@ export class AdminService {
       relations: ['children'], // 🚀 Make sure to load the linked children!
       order: { fullName: 'ASC' },
     });
+  }
+  // Inside admin.service.ts
+  async getArrivalGateStatus() {
+    const activeSession = await this.sessionRepo.findOne({
+      where: { isOpen: true },
+    });
+
+    // 🚀 NEW: Find all students who already arrived in this session
+    let arrivedStudentIds: string[] = [];
+    if (activeSession) {
+      const existingArrivals = await this.arrivalRepo.find({
+        where: { sessionId: activeSession.id },
+        relations: ['student'],
+      });
+      arrivedStudentIds = existingArrivals.map((a) => a.student.id);
+    }
+
+    return {
+      isOpen: !!activeSession,
+      session: activeSession,
+      arrivedStudentIds, // 🚀 Send this array to the frontend
+    };
+  }
+
+  async toggleArrivalGate(isOpen: boolean) {
+    if (isOpen) {
+      // Open a new session
+      const newSession = this.sessionRepo.create({ isOpen: true });
+      return this.sessionRepo.save(newSession);
+    } else {
+      // Close the active session
+      const activeSession = await this.sessionRepo.findOne({
+        where: { isOpen: true },
+      });
+      if (activeSession) {
+        activeSession.isOpen = false;
+        activeSession.closedAt = new Date();
+        return this.sessionRepo.save(activeSession);
+      }
+    }
+  }
+
+  // 🚀 FETCH THE REPORT
+  async getLatestArrivalReport() {
+    // Get the most recently opened session (open or closed)
+    const latestSession = await this.sessionRepo.findOne({
+      where: {},
+      order: { openedAt: 'DESC' },
+    });
+
+    if (!latestSession) return { session: null, records: [] };
+
+    // Fetch all arrivals recorded during this session
+    const records = await this.arrivalRepo.find({
+      where: { sessionId: latestSession.id },
+      relations: ['student'],
+      order: { recordedTime: 'DESC' },
+    });
+
+    return { session: latestSession, records };
   }
 }

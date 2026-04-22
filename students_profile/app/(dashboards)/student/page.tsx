@@ -366,12 +366,15 @@ export default function StudentDashboard() {
           <h2 className="text-xl font-bold text-[#004643]">My Badge Cabinet</h2>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 hover:scrollbar-thumb-gray-400">
           {monthlyHistory && monthlyHistory.length > 0 ? (
             monthlyHistory.map((history: any, idx: number) => {
               const badge = getBadgeDetails(history.points);
               return (
-                <div key={idx} className="flex flex-col items-center group">
+                <div
+                  key={idx}
+                  className="flex flex-col items-center group min-w-[100px]"
+                >
                   {/* The Badge Graphic */}
                   <div
                     className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${badge.color} shadow-lg flex items-center justify-center transform transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-2 relative`}
@@ -415,7 +418,7 @@ export default function StudentDashboard() {
               <FileText size={18} /> Official Records
             </h2>
           </div>
-          <div className="divide-y divide-white/30">
+          <div className="divide-y divide-white/30 max-h-[400px] overflow-y-auto">
             {records.length === 0 ? (
               <p className="p-8 text-center text-gray-500 font-medium">
                 No records found yet.
@@ -473,7 +476,7 @@ export default function StudentDashboard() {
               <Clock size={18} /> Recent Submissions
             </h2>
           </div>
-          <div className="p-5 space-y-3">
+          <div className="p-5 space-y-3 max-h-[400px] overflow-y-auto">
             {recentActivities.length === 0 ? (
               <p className="text-center text-gray-500 text-sm mt-4">
                 No recent activity.

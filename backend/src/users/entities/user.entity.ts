@@ -51,4 +51,7 @@ export class User {
 
   @Column({ nullable: true })
   fcmToken!: string;
+
+  @Column({ nullable: true })
+  department!: string;
 }

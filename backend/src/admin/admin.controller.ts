@@ -9,14 +9,19 @@ import {
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { Role } from 'src/users/enums/role.enum';
+import { RolesGuard } from '../auth/guards/roles.guard'; // 🚀 Added RolesGuard
+import { Roles } from '../auth/decorators/roles.decorator'; // 🚀 Added Roles decorator
+import { Role } from '../users/enums/role.enum';
 
 @Controller('admin')
-@UseGuards(JwtAuthGuard)
-// Require user to be logged in to use these routes
-// Note: You should eventually add @Roles(Role.ADMIN) here once you make an Admin user!
+@UseGuards(JwtAuthGuard, RolesGuard) // 🚀 Enforce Role Checking globally for this controller
+@Roles(Role.ADMIN) // 🚀 Require user to be an ADMIN to use ANY of these routes
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
+
+  // ==========================================
+  // USER MANAGEMENT
+  // ==========================================
 
   @Get('users')
   getAllUsers() {
@@ -28,41 +33,24 @@ export class AdminController {
     return this.adminService.createUser(body);
   }
 
+  @Post('users/bulk')
+  async bulkImport(@Body() body: any[]) {
+    // Uses Promise.all to map over the array and create users concurrently
+    return Promise.all(body.map((user) => this.adminService.createUser(user)));
+  }
+
   @Patch('users/:id/access')
   toggleAccess(@Param('id') id: string, @Body('isActive') isActive: boolean) {
     return this.adminService.toggleAccess(id, isActive);
   }
 
-  @Post('months/start')
-  startMonth(@Body('name') name: string) {
-    return this.adminService.startNewMonth(name);
-  }
-  @Get('months/active')
-  async getActiveMonth() {
-    // Note: If getActiveMonth in service currently only returns a string,
-    // update the service to return the whole object, or just fetch it here:
-    const active = await this.adminService['monthRepo'].findOne({
-      where: { isActive: true },
-    });
-    return active || { name: 'No Active Month', startedAt: null };
-  }
-  @Get('months')
-  getAllMonths() {
-    return this.adminService.getAllMonths();
-  }
+  // ==========================================
+  // PARENT MANAGEMENT
+  // ==========================================
 
-  @Post('months/end')
-  endMonth() {
-    return this.adminService.endCurrentMonth();
-  }
-
-  @Get('report')
-  getSystemReport() {
-    return this.adminService.getSystemReport();
-  }
-  @Post('users/bulk')
-  async bulkImport(@Body() body: any[]) {
-    return Promise.all(body.map((user) => this.adminService.createUser(user)));
+  @Get('parents')
+  async getParents() {
+    return this.adminService.getAllParents();
   }
 
   @Post('users/create-parent')
@@ -74,11 +62,57 @@ export class AdminController {
       parentPhone: string;
     },
   ) {
-    // 🚀 Change this line to call the linking function!
     return this.adminService.createParentAccount(body);
   }
-  @Get('parents')
-  async getParents() {
-    return this.adminService.getAllParents();
+
+  // ==========================================
+  // ACADEMIC MONTH MANAGEMENT
+  // ==========================================
+
+  @Post('months/start')
+  startMonth(@Body('name') name: string) {
+    return this.adminService.startNewMonth(name);
+  }
+
+  @Post('months/end')
+  endMonth() {
+    return this.adminService.endCurrentMonth();
+  }
+
+  @Get('months/active')
+  async getActiveMonth() {
+    const active = await this.adminService['monthRepo'].findOne({
+      where: { isActive: true },
+    });
+    return active || { name: 'No Active Month', startedAt: null };
+  }
+
+  @Get('months')
+  getAllMonths() {
+    return this.adminService.getAllMonths();
+  }
+
+  // ==========================================
+  // SYSTEM REPORTS & ARRIVALS
+  // ==========================================
+
+  @Get('report')
+  getSystemReport() {
+    return this.adminService.getSystemReport();
+  }
+
+  @Get('arrivals/status')
+  getArrivalStatus() {
+    return this.adminService.getArrivalGateStatus();
+  }
+
+  @Post('arrivals/toggle')
+  toggleArrivalGate(@Body('isOpen') isOpen: boolean) {
+    return this.adminService.toggleArrivalGate(isOpen);
+  }
+
+  @Get('arrivals/report')
+  getArrivalReport() {
+    return this.adminService.getLatestArrivalReport();
   }
 }

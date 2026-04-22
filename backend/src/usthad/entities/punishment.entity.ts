@@ -45,4 +45,6 @@ export class Punishment {
 
   @CreateDateColumn()
   createdAt!: Date;
+  @Column({ default: 'PUNISHMENT' })
+  actionType!: string;
 }

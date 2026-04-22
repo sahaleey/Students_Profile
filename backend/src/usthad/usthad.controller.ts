@@ -36,7 +36,7 @@ export class UsthadController {
   getDashboard(@Req() req: AuthenticatedRequest) {
     return this.usthadService.getDashboardOverview(req.user.userId);
   }
-  @Roles(Role.USTHAD, Role.HISAN, Role.SUBWING, Role.ADMIN)
+  @Roles(Role.USTHAD, Role.HISAN, Role.SUBWING, Role.ADMIN, Role.STAFF)
   @Get('students')
   async getStudents() {
     return this.usthadService.getStudentsWithPoints();
@@ -185,6 +185,7 @@ export class UsthadController {
     Role.SUBWING,
     Role.PARENT,
     Role.ADMIN,
+    Role.STAFF,
   )
   async getSpecialHighlight() {
     return this.usthadService.getLatestSpecialHighlight();
@@ -192,5 +193,19 @@ export class UsthadController {
   @Get('class-report')
   getClassReport() {
     return this.usthadService.getClassReport();
+  }
+
+  @Post('arrivals')
+  recordArrival(
+    @Request() req: any,
+    @Body()
+    body: { studentId: string; arrivalTime: string; isExcused: boolean },
+  ) {
+    return this.usthadService.recordLeaveArrival(
+      req.user.userId,
+      body.studentId,
+      body.arrivalTime,
+      body.isExcused,
+    );
   }
 }

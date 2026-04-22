@@ -9,6 +9,8 @@ import {
   CheckCircle2,
   Search,
   Trash2,
+  Coins,
+  ShieldAlert,
 } from "lucide-react";
 
 interface Student {
@@ -41,6 +43,7 @@ export default function PunishmentsPage() {
   const [step, setStep] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [actionType, setActionType] = useState("PUNISHMENT");
 
   // 🚀 API States
   const [rawStudents, setRawStudents] = useState<RawStudent[]>([]);
@@ -132,6 +135,7 @@ export default function PunishmentsPage() {
           body: JSON.stringify({
             studentId: selectedStudent.id,
             ...formData,
+            actionType,
           }),
         },
       );
@@ -310,6 +314,39 @@ export default function PunishmentsPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="flex gap-4 mb-4">
+                  <label
+                    className={`flex-1 cursor-pointer p-4 border rounded-xl flex items-center justify-center gap-2 font-bold transition-all ${
+                      actionType === "PUNISHMENT"
+                        ? "bg-red-50 border-red-500 text-red-700 shadow-sm"
+                        : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      className="hidden"
+                      checked={actionType === "PUNISHMENT"}
+                      onChange={() => setActionType("PUNISHMENT")}
+                    />
+                    <ShieldAlert size={18} /> Disciplinary Action
+                  </label>
+
+                  <label
+                    className={`flex-1 cursor-pointer p-4 border rounded-xl flex items-center justify-center gap-2 font-bold transition-all ${
+                      actionType === "FINE"
+                        ? "bg-amber-50 border-amber-500 text-amber-700 shadow-sm"
+                        : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      className="hidden"
+                      checked={actionType === "FINE"}
+                      onChange={() => setActionType("FINE")}
+                    />
+                    <Coins size={18} /> Monetary Fine
+                  </label>
+                </div>
                 <div>
                   <label className="text-sm font-bold text-gray-700">
                     Punishment Name

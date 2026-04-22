@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   ChevronRight,
   GraduationCap,
+  Coins,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -101,16 +102,26 @@ export default function ClassWiseReportPage() {
       ) : (
         <div className="space-y-4">
           {/* Quick Stats Bar */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="bg-emerald-50 text-emerald-800 px-4 py-2 rounded-lg font-bold border border-emerald-200 flex items-center gap-2 text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div className="w-full bg-emerald-50 text-emerald-800 px-4 py-3 rounded-xl font-bold border border-emerald-200 flex items-center justify-center gap-2 text-sm">
               <ShieldCheck size={16} />{" "}
               {filteredStudents.filter((s) => s.status === "GREEN").length}{" "}
               Clear
             </div>
-            <div className="bg-red-50 text-red-800 px-4 py-2 rounded-lg font-bold border border-red-200 flex items-center gap-2 text-sm">
+            <div className="w-full bg-red-50 text-red-800 px-4 py-3 rounded-xl font-bold border border-red-200 flex items-center justify-center gap-2 text-sm">
               <ShieldAlert size={16} />{" "}
               {filteredStudents.filter((s) => s.status === "RED").length} Action
               Required
+            </div>
+            <div className="w-full bg-amber-50 text-amber-600 px-4 py-3 rounded-xl font-bold border border-amber-200 flex items-center justify-center gap-2 text-sm">
+              <ShieldAlert size={16} />{" "}
+              {filteredStudents.filter((s) => s.status === "YELLOW").length}{" "}
+              Fine Pending
+            </div>
+            <div className="w-full bg-orange-50 text-orange-800 px-4 py-3 rounded-xl font-bold border border-orange-200 flex items-center justify-center gap-2 text-sm">
+              <ShieldAlert size={16} />{" "}
+              {filteredStudents.filter((s) => s.status === "BOTH").length} Both
+              Fine and Action Pending
             </div>
           </div>
 
@@ -121,59 +132,91 @@ export default function ClassWiseReportPage() {
                 No students found in this class.
               </p>
             ) : (
-              filteredStudents.map((student) => (
-                <Link
-                  key={student.id}
-                  href={`/usthad/students/${student.id}`} // Links to the deep-dive profile!
-                  className={`relative p-5 rounded-2xl border transition-all hover:scale-[1.02] hover:shadow-lg group overflow-hidden ${
-                    student.status === "GREEN"
-                      ? "bg-white border-emerald-200 hover:border-emerald-400"
-                      : "bg-red-50 border-red-300 hover:border-red-500 shadow-[inset_0_0_20px_rgba(239,68,68,0.05)]"
-                  }`}
-                >
-                  {/* Status Indicator Icon */}
-                  <div className="absolute right-4 top-4">
-                    {student.status === "GREEN" ? (
-                      <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                        <ShieldCheck size={16} className="text-emerald-600" />
-                      </div>
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-red-200 flex items-center justify-center animate-pulse">
-                        <ShieldAlert size={16} className="text-red-700" />
-                      </div>
-                    )}
-                  </div>
+              filteredStudents.map((student) => {
+                // 🚀 CSS MAGIC: Define the background styling dynamically
+                let bgStyle = "";
+                let borderColor = "";
+                let statusText = "";
+                let textColor = "";
 
-                  <div className="pr-10">
-                    <p
-                      className={`text-[10px] font-black uppercase tracking-wider mb-1 ${student.status === "GREEN" ? "text-emerald-600" : "text-red-600"}`}
-                    >
-                      {student.status === "GREEN"
-                        ? "Clear Standing"
-                        : "Attention Required"}
-                    </p>
-                    <h3
-                      className={`font-bold text-lg leading-tight capitalize ${student.status === "GREEN" ? "text-gray-900" : "text-red-950"}`}
-                    >
-                      {student.fullName}
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-1 font-medium">
-                      Admn: {student.username}
-                    </p>
-                  </div>
+                if (student.status === "GREEN") {
+                  bgStyle = "bg-white";
+                  borderColor = "border-emerald-200 hover:border-emerald-400";
+                  statusText = "Clear Standing";
+                  textColor = "text-emerald-600";
+                } else if (student.status === "RED") {
+                  bgStyle = "bg-red-50";
+                  borderColor =
+                    "border-red-300 hover:border-red-500 shadow-[inset_0_0_20px_rgba(239,68,68,0.05)]";
+                  statusText = "Action Required";
+                  textColor = "text-red-600";
+                } else if (student.status === "YELLOW") {
+                  bgStyle = "bg-amber-50";
+                  borderColor =
+                    "border-amber-300 hover:border-amber-500 shadow-[inset_0_0_20px_rgba(245,158,11,0.05)]";
+                  statusText = "Fine Pending";
+                  textColor = "text-amber-600";
+                } else if (student.status === "BOTH") {
+                  // 🚀 THE HALF AND HALF EFFECT using a sharp CSS linear-gradient!
+                  bgStyle =
+                    "bg-[linear-gradient(135deg,#fef2f2_50%,#fffbeb_50%)]";
+                  borderColor =
+                    "border-orange-300 hover:border-orange-500 shadow-md";
+                  statusText = "Action & Fine Pending";
+                  textColor = "text-orange-600";
+                }
 
-                  <div className="mt-6 flex items-center justify-between">
-                    <span className="text-xs font-bold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                      View Report <ChevronRight size={14} />
-                    </span>
-                  </div>
+                return (
+                  <Link
+                    key={student.id}
+                    href={`/usthad/students/${student.id}`}
+                    className={`relative p-5 rounded-2xl border transition-all hover:scale-[1.02] hover:shadow-lg group overflow-hidden ${bgStyle} ${borderColor}`}
+                  >
+                    {/* Status Indicator Icons */}
+                    <div className="absolute right-4 top-4 flex gap-1">
+                      {(student.status === "RED" ||
+                        student.status === "BOTH") && (
+                        <div className="w-8 h-8 rounded-full bg-red-200 flex items-center justify-center animate-pulse shadow-sm">
+                          <ShieldAlert size={16} className="text-red-700" />
+                        </div>
+                      )}
+                      {(student.status === "YELLOW" ||
+                        student.status === "BOTH") && (
+                        <div className="w-8 h-8 rounded-full bg-amber-200 flex items-center justify-center animate-pulse shadow-sm">
+                          <Coins size={16} className="text-amber-700" />
+                        </div>
+                      )}
+                      {student.status === "GREEN" && (
+                        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center shadow-sm">
+                          <ShieldCheck size={16} className="text-emerald-600" />
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Red Status Glow Effect */}
-                  {student.status === "RED" && (
-                    <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-red-500/10 rounded-full blur-2xl pointer-events-none" />
-                  )}
-                </Link>
-              ))
+                    <div className="pr-16">
+                      <p
+                        className={`text-[10px] font-black uppercase tracking-wider mb-1 ${textColor}`}
+                      >
+                        {statusText}
+                      </p>
+                      <h3
+                        className={`font-bold text-lg leading-tight capitalize ${student.status === "GREEN" ? "text-gray-900" : "text-gray-900"}`}
+                      >
+                        {student.fullName}
+                      </h3>
+                      <p className="text-xs text-gray-500 mt-1 font-medium">
+                        Admn: {student.username}
+                      </p>
+                    </div>
+
+                    <div className="mt-6 flex items-center justify-between">
+                      <span className="text-xs font-bold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+                        View Report <ChevronRight size={14} />
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })
             )}
           </div>
         </div>

@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -13,11 +14,14 @@ import { Role } from '../users/enums/role.enum';
 import { AcademicMonth } from '../admin/entities/academic-month.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import * as admin from 'firebase-admin';
+import { Arrival } from './entities/arrival.entity';
+import { ArrivalSession } from '../admin/entities/arrival-session.entity';
 
 interface AssignPunishmentData {
   title: string;
   category: string;
   description: string;
+  actionType?: string;
 }
 
 interface GrantAchievementData {
@@ -40,6 +44,9 @@ export class UsthadService {
     @InjectRepository(AcademicMonth)
     private monthRepo: Repository<AcademicMonth>,
     private notifService: NotificationsService,
+    @InjectRepository(Arrival) private arrivalRepo: Repository<Arrival>,
+    @InjectRepository(ArrivalSession)
+    private arrivalSessionRepo: Repository<ArrivalSession>,
   ) {}
 
   // 1. Assign Punishment
@@ -58,6 +65,7 @@ export class UsthadService {
       title: data.title,
       category: data.category,
       description: data.description,
+      actionType: data.actionType || 'PUNISHMENT',
       student: { id: studentId },
       assignedBy: { id: usthadId },
     });
@@ -567,30 +575,127 @@ export class UsthadService {
 
   // Fetch all students with their RED/GREEN disciplinary status
   async getClassReport() {
-    // 1. Fetch all active students
     const students = await this.userRepo.find({
       where: { role: Role.STUDENT, isActive: true },
       select: ['id', 'fullName', 'username', 'class'],
-      order: { class: 'ASC', fullName: 'ASC' }, // Sort by class first!
+      order: { class: 'ASC', fullName: 'ASC' },
     });
 
-    // 2. Fetch ALL active punishments in one go
     const activePunishments = await this.punishmentRepo.find({
       where: { status: PunishmentStatus.ACTIVE },
       relations: ['student'],
     });
 
-    // 3. Map the RED/GREEN status efficiently
     return students.map((student) => {
-      // If the student's ID appears in the active punishments list, they are RED!
-      const hasActivePunishment = activePunishments.some(
+      // Find all active actions for THIS specific student
+      const studentActions = activePunishments.filter(
         (p) => p.student?.id === student.id,
       );
 
+      // Check what types of actions they have
+      const hasPunishment = studentActions.some(
+        (p) => p.actionType === 'PUNISHMENT',
+      );
+      const hasFine = studentActions.some((p) => p.actionType === 'FINE');
+
+      // 🚀 The New Grading Logic
+      let status = 'GREEN';
+      if (hasPunishment && hasFine) status = 'BOTH';
+      else if (hasPunishment) status = 'RED';
+      else if (hasFine) status = 'YELLOW';
+
       return {
         ...student,
-        status: hasActivePunishment ? 'RED' : 'GREEN',
+        status,
       };
     });
+  }
+
+  async recordLeaveArrival(
+    usthadId: string,
+    studentId: string,
+    arrivalTime: string,
+    isExcused: boolean,
+  ) {
+    // 1. Check if the Gate is Open!
+    // (You will need to inject ArrivalSession repo into UsthadService constructor!)
+    const activeSession = await this.arrivalSessionRepo.findOne({
+      where: { isOpen: true },
+    });
+    if (!activeSession) {
+      throw new BadRequestException(
+        'Arrival marking is currently closed by the Admin.',
+      );
+    }
+
+    const student = await this.userRepo.findOne({
+      where: { id: studentId },
+      relations: ['parent'],
+    });
+    if (!student) throw new NotFoundException('Student not found');
+
+    const activeMonth = await this.monthRepo.findOne({
+      where: { isActive: true },
+    });
+    const currentMonth = activeMonth ? activeMonth.name : 'Default Term';
+
+    const arrivalDate = new Date(arrivalTime);
+    const hours = arrivalDate.getHours();
+    const minutes = arrivalDate.getMinutes();
+
+    const isLate = hours > 18 || (hours === 18 && minutes > 0);
+
+    // 🚀 THE NEW FINE RULE: Only assign fine if they are late AND NOT excused!
+    const applyFine = isLate && !isExcused;
+
+    // 2. Save the Arrival Record
+    const arrivalRecord = this.arrivalRepo.create({
+      student: { id: studentId },
+      recordedTime: arrivalDate,
+      isLate,
+      isExcused, // Save the excuse
+      sessionId: activeSession.id, // Link to the active Admin session!
+      fineAssigned: applyFine,
+      academicMonth: currentMonth,
+    });
+    await this.arrivalRepo.save(arrivalRecord);
+
+    // 3. Auto-Assign Fine ONLY if applyFine is true
+    if (applyFine) {
+      const fine = this.punishmentRepo.create({
+        title: 'Late Arrival Fine (₹150)',
+        category: 'Discipline',
+        description: `Arrived from leave after 6:00 PM. Recorded time: ${arrivalDate.toLocaleTimeString()}`,
+        actionType: 'FINE',
+        student: { id: studentId },
+        assignedBy: { id: usthadId },
+      });
+      await this.punishmentRepo.save(fine);
+    }
+
+    // 4. Notify Parent (Dynamic Message)
+    if (student.parent) {
+      let parentMessage = `Your child ${student.fullName} has arrived safely at campus at ${arrivalDate.toLocaleTimeString()}.`;
+      let notifType = 'SUCCESS';
+
+      if (applyFine) {
+        parentMessage +=
+          ' However, they were marked LATE and issued a ₹150 fine.';
+        notifType = 'WARNING';
+      } else if (isLate && isExcused) {
+        parentMessage +=
+          ' They arrived late, but their delay was officially excused. No fine issued.';
+      }
+
+      await this.notifService.sendNotification({
+        recipientId: student.parent.id,
+        title: 'Campus Arrival Update 🏫',
+        message: parentMessage,
+        type: notifType,
+        link: '/parent/dashboard',
+      });
+    }
+
+    return arrivalRecord;
   }
 }

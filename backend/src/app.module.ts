@@ -12,6 +12,7 @@ import { StudentModule } from './student/student.module';
 import { SubwingModule } from './subwing/subwing.module';
 import { ConfigService } from '@nestjs/config';
 import { ParentModule } from './parent/parent.module';
+import { StaffModule } from './staff/staff.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ParentModule } from './parent/parent.module';
     StudentModule,
     SubwingModule,
     ParentModule,
+    StaffModule,
   ],
   controllers: [AppController],
   providers: [AppService],

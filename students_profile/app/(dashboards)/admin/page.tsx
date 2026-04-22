@@ -6,11 +6,10 @@ import {
   Shield,
   AlertTriangle,
   CheckCircle2,
-  Users,
   GraduationCap,
   Key,
   Sparkles,
-  TrendingUp,
+  Briefcase, // 🚀 Imported new icon for departments
 } from "lucide-react";
 
 export default function AdminCentre() {
@@ -23,6 +22,7 @@ export default function AdminCentre() {
     fullName: "",
     role: "student",
     class: "1",
+    department: "Library", // 🚀 Added default department state
     username: "",
     password: "campus123",
   });
@@ -35,10 +35,19 @@ export default function AdminCentre() {
     setError("");
     setSuccessMsg("");
 
-    const payload =
-      formData.role === "student"
-        ? { ...formData }
-        : (({ class: _class, ...rest }) => rest)(formData);
+    // 🚀 Dynamic Payload Construction
+    let payload: any = {
+      fullName: formData.fullName,
+      role: formData.role,
+      username: formData.username,
+      password: formData.password,
+    };
+
+    if (formData.role === "student") {
+      payload.class = formData.class;
+    } else if (formData.role === "staff") {
+      payload.department = formData.department; // 🚀 Include department if Staff!
+    }
 
     try {
       const response = await fetch(
@@ -65,6 +74,7 @@ export default function AdminCentre() {
         fullName: "",
         role: "student",
         class: "1",
+        department: "Library",
         username: "",
         password: "campus123",
       });
@@ -82,6 +92,7 @@ export default function AdminCentre() {
     hisan: "from-purple-500 to-purple-600",
     admin: "from-red-500 to-red-600",
     subwing: "from-orange-500 to-orange-600",
+    staff: "from-teal-500 to-teal-600",
   };
 
   return (
@@ -172,31 +183,54 @@ export default function AdminCentre() {
                 <option value="hisan">HISAN / Union</option>
                 <option value="admin">System Admin</option>
                 <option value="subwing">Hisan Subwing</option>
+                <option value="staff">Staff</option>
               </select>
             </div>
           </div>
 
-          {/* DYNAMIC CLASS FIELD - Only shows for students */}
-          {formData.role === "student" && (
-            <div className="animate-slideIn">
-              <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <GraduationCap size={14} /> Class / Batch
-              </label>
-              <select
-                value={formData.class}
-                onChange={(e) =>
-                  setFormData({ ...formData, class: e.target.value })
-                }
-                className="w-full mt-1.5 p-3 bg-white/80 backdrop-blur-sm border text-black border-gray-200 rounded-xl outline-none focus:border-[#004643] focus:ring-2 focus:ring-[#004643]/20 transition-all cursor-pointer"
-              >
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                  <option key={num} value={num.toString()}>
-                    Class {num}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* DYNAMIC CLASS FIELD - Only shows for students */}
+            {formData.role === "student" && (
+              <div className="animate-slideIn">
+                <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <GraduationCap size={14} /> Class / Batch
+                </label>
+                <select
+                  value={formData.class}
+                  onChange={(e) =>
+                    setFormData({ ...formData, class: e.target.value })
+                  }
+                  className="w-full mt-1.5 p-3 bg-white/80 backdrop-blur-sm border text-black border-gray-200 rounded-xl outline-none focus:border-[#004643] focus:ring-2 focus:ring-[#004643]/20 transition-all cursor-pointer"
+                >
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                    <option key={num} value={num.toString()}>
+                      Class {num}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* 🚀 DYNAMIC DEPARTMENT FIELD - Only shows for Staff */}
+            {formData.role === "staff" && (
+              <div className="animate-slideIn">
+                <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <Briefcase size={14} /> Department
+                </label>
+                <select
+                  value={formData.department}
+                  onChange={(e) =>
+                    setFormData({ ...formData, department: e.target.value })
+                  }
+                  className="w-full mt-1.5 p-3 bg-white/80 backdrop-blur-sm border text-black border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-teal-500 transition-all cursor-pointer"
+                >
+                  <option value="Library">Library</option>
+                  <option value="Outreach">Outreach</option>
+                  <option value="Welfare">Welfare</option>
+                </select>
+              </div>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Username */}
@@ -211,7 +245,11 @@ export default function AdminCentre() {
                 onChange={(e) =>
                   setFormData({ ...formData, username: e.target.value })
                 }
-                placeholder="e.g., 1080 or teacher1"
+                placeholder={
+                  formData.role === "staff"
+                    ? "e.g., library1"
+                    : "e.g., 1080 or teacher1"
+                }
                 className="w-full mt-1.5 p-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl outline-none text-black focus:border-[#004643] focus:ring-2 focus:ring-[#004643]/20 transition-all placeholder:text-gray-400"
               />
             </div>
@@ -250,11 +288,21 @@ export default function AdminCentre() {
                   {formData.role}
                 </p>
               </div>
+
+              {/* Conditional Preview details */}
               {formData.role === "student" && formData.class && (
                 <div className="ml-auto text-right">
                   <p className="text-xs text-gray-500">Class</p>
                   <p className="font-semibold text-gray-800">
                     Class {formData.class}
+                  </p>
+                </div>
+              )}
+              {formData.role === "staff" && formData.department && (
+                <div className="ml-auto text-right">
+                  <p className="text-xs text-gray-500">Department</p>
+                  <p className="font-semibold text-teal-800">
+                    {formData.department}
                   </p>
                 </div>
               )}
@@ -292,7 +340,8 @@ export default function AdminCentre() {
             <p className="text-xs font-semibold text-gray-700">Admin Tips</p>
             <p className="text-xs text-gray-600 mt-0.5">
               • Student usernames should be their admission numbers
-              <br />• Use unique usernames to avoid conflicts
+              <br />• Staff usernames should be simple (e.g., library1,
+              outreach_admin)
             </p>
           </div>
         </div>
@@ -309,7 +358,6 @@ export default function AdminCentre() {
             transform: translateY(0);
           }
         }
-
         @keyframes slideIn {
           from {
             opacity: 0;
@@ -320,11 +368,9 @@ export default function AdminCentre() {
             transform: translateX(0);
           }
         }
-
         .animate-fadeInUp {
           animation: fadeInUp 0.6s ease-out;
         }
-
         .animate-slideIn {
           animation: slideIn 0.4s ease-out forwards;
         }

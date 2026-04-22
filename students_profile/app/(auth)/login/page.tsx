@@ -27,6 +27,7 @@ export default function LoginPage() {
         else if (user.role === "hisan") router.replace("/hisan");
         else if (user.role === "subwing") router.replace("/subwing/programs");
         else if (user.role === "parent") router.replace("/parent");
+        else if (user.role === "staff") router.replace("/staff");
       } catch (err) {
         // If the JSON is corrupted somehow, clear it and force login
         localStorage.removeItem("token");
@@ -93,6 +94,7 @@ export default function LoginPage() {
       else if (data.user.role === "hisan") router.push("/hisan");
       else if (data.user.role === "subwing") router.push("/subwing/programs");
       else if (data.user.role === "parent") router.push("/parent");
+      else if (data.user.role === "staff") router.push("/staff");
     } catch (err: unknown) {
       // 🚀 THE FIX: Display the exact message thrown by the backend
       const message =

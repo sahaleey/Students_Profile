@@ -9,6 +9,8 @@ import {
   ChevronRight,
   Activity,
   BellOff,
+  Coins,
+  ShieldCheck,
 } from "lucide-react";
 import { fetchFirebaseToken } from "@/lib/firebase";
 
@@ -200,52 +202,110 @@ export default function ParentDashboard() {
 
               {/* Status Board */}
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50">
-                {/* Disciplinary Standing */}
-                <div
-                  className={`p-5 rounded-2xl border ${
-                    childData.activePunishments.length > 0
-                      ? "bg-red-50 border-red-200 shadow-[inset_0_0_15px_rgba(239,68,68,0.1)]"
-                      : "bg-emerald-50 border-emerald-200"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-4">
-                    <ShieldAlert
-                      size={20}
-                      className={
-                        childData.activePunishments.length > 0
-                          ? "text-red-600"
-                          : "text-emerald-600"
-                      }
-                    />
-                    <h3
-                      className={`font-bold text-lg ${childData.activePunishments.length > 0 ? "text-red-900" : "text-emerald-900"}`}
-                    >
-                      Disciplinary Standing
-                    </h3>
-                  </div>
+                {/* 🚀 UPGRADED: Disciplinary & Fine Standing */}
+                {(() => {
+                  // Calculate the status for THIS specific child
+                  const hasPunishment = childData.activePunishments.some(
+                    (p: any) => p.actionType === "PUNISHMENT" || !p.actionType,
+                  );
+                  const hasFine = childData.activePunishments.some(
+                    (p: any) => p.actionType === "FINE",
+                  );
 
-                  {childData.activePunishments.length === 0 ? (
-                    <p className="text-sm font-medium text-emerald-700 flex items-center gap-2">
-                      <Activity size={16} /> Clear standing. No active actions.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {childData.activePunishments.map((p: any) => (
-                        <div
-                          key={p.id}
-                          className="bg-white p-3 rounded-xl border border-red-100"
-                        >
-                          <p className="font-bold text-red-800 text-sm">
-                            {p.title}
-                          </p>
-                          <p className="text-xs text-red-600/70 mt-1 uppercase font-bold tracking-wider">
-                            {p.category}
-                          </p>
+                  let boxBg = "bg-emerald-50 border-emerald-200";
+                  let headerIcon = (
+                    <ShieldCheck size={20} className="text-emerald-600" />
+                  );
+                  let headerText = "Clear Standing";
+                  let headerColor = "text-emerald-900";
+
+                  if (hasPunishment && hasFine) {
+                    boxBg =
+                      "bg-[linear-gradient(135deg,#fef2f2_50%,#fffbeb_50%)] border-orange-200 shadow-sm";
+                    headerIcon = (
+                      <div className="flex -space-x-2">
+                        <ShieldAlert
+                          size={20}
+                          className="text-red-600 relative z-10"
+                        />
+                        <Coins size={20} className="text-amber-600" />
+                      </div>
+                    );
+                    headerText = "Action & Fine Pending";
+                    headerColor = "text-orange-900";
+                  } else if (hasPunishment) {
+                    boxBg =
+                      "bg-red-50 border-red-200 shadow-[inset_0_0_15px_rgba(239,68,68,0.1)]";
+                    headerIcon = (
+                      <ShieldAlert size={20} className="text-red-600" />
+                    );
+                    headerText = "Disciplinary Standing";
+                    headerColor = "text-red-900";
+                  } else if (hasFine) {
+                    boxBg =
+                      "bg-amber-50 border-amber-200 shadow-[inset_0_0_15px_rgba(245,158,11,0.1)]";
+                    headerIcon = <Coins size={20} className="text-amber-600" />;
+                    headerText = "Fines Pending";
+                    headerColor = "text-amber-900";
+                  }
+
+                  return (
+                    <div className={`p-5 rounded-2xl border ${boxBg}`}>
+                      <div className="flex items-center gap-2 mb-4">
+                        {headerIcon}
+                        <h3 className={`font-bold text-lg ${headerColor}`}>
+                          {headerText}
+                        </h3>
+                      </div>
+
+                      {childData.activePunishments.length === 0 ? (
+                        <p className="text-sm font-medium text-emerald-700 flex items-center gap-2 bg-white/50 p-3 rounded-xl">
+                          <Activity size={16} /> Clear standing. No active
+                          actions.
+                        </p>
+                      ) : (
+                        <div className="space-y-3">
+                          {childData.activePunishments.map((p: any) => {
+                            const isFine = p.actionType === "FINE";
+                            return (
+                              <div
+                                key={p.id}
+                                className={`p-3 rounded-xl border bg-white flex items-start gap-3 shadow-sm ${isFine ? "border-amber-100" : "border-red-100"}`}
+                              >
+                                <div
+                                  className={`mt-0.5 p-1.5 rounded-lg ${isFine ? "bg-amber-50 text-amber-600" : "bg-red-50 text-red-600"}`}
+                                >
+                                  {isFine ? (
+                                    <Coins size={16} />
+                                  ) : (
+                                    <ShieldAlert size={16} />
+                                  )}
+                                </div>
+                                <div>
+                                  <p
+                                    className={`font-bold text-sm ${isFine ? "text-amber-900" : "text-red-800"}`}
+                                  >
+                                    {p.title}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span
+                                      className={`text-[10px] uppercase font-black tracking-wider px-2 py-0.5 rounded-md ${isFine ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}
+                                    >
+                                      {isFine ? "FINE" : "ACTION"}
+                                    </span>
+                                    <span className="text-xs text-gray-500 font-medium">
+                                      {p.category}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </div>
+                  );
+                })()}
 
                 {/* Recent Achievements */}
                 <div className="p-5 rounded-2xl border border-gray-200 bg-white shadow-sm">
