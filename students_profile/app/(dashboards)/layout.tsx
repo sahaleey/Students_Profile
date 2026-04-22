@@ -252,13 +252,13 @@ export default function DashboardLayout({
     } else if (userRole === "usthad") {
       navItems = [
         { href: "/usthad", label: "Overview", icon: LayoutDashboard },
+        { href: "/usthad/achievements", label: "Achievements", icon: Trophy },
+        { href: "/usthad/attachments", label: "Attachments", icon: FileCheck },
         {
           href: "/usthad/punishments",
           label: "Punishments",
           icon: AlertOctagon,
         },
-        { href: "/usthad/attachments", label: "Attachments", icon: FileCheck },
-        { href: "/usthad/achievements", label: "Achievements", icon: Trophy },
         { href: "/usthad/students", label: "Students Status", icon: Info },
         { href: "/usthad/class-report", label: "Class Reports", icon: Users },
         { href: "/usthad/arrivals", label: "Leave Arrivals", icon: Clock },

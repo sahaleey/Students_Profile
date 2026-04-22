@@ -144,15 +144,15 @@ export default function UsthadDashboard() {
       {/* STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-red-50 text-red-600">
-            <AlertTriangle size={24} />
+          <div className="p-3 rounded-xl bg-emerald-50 text-emerald-600">
+            <Trophy size={24} />
           </div>
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
-              Total Punishments
+              Achievements
             </p>
             <p className="text-2xl font-black text-gray-800">
-              {stats.punishmentsCount}
+              {stats.achievementsCount}
             </p>
           </div>
         </div>
@@ -170,17 +170,16 @@ export default function UsthadDashboard() {
             </p>
           </div>
         </div>
-
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="p-3 rounded-xl bg-emerald-50 text-emerald-600">
-            <Trophy size={24} />
+          <div className="p-3 rounded-xl bg-red-50 text-red-600">
+            <AlertTriangle size={24} />
           </div>
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
-              Achievements
+              Total Behavioral credits
             </p>
             <p className="text-2xl font-black text-gray-800">
-              {stats.achievementsCount}
+              {stats.punishmentsCount}
             </p>
           </div>
         </div>
@@ -189,20 +188,19 @@ export default function UsthadDashboard() {
       {/* ACTION CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <Link
-          href="/usthad/punishments"
-          className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-red-200 transition-all group"
+          href="/usthad/achievements"
+          className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all group"
         >
-          <div className="p-3 bg-red-50 rounded-xl w-fit mb-4">
-            <AlertTriangle className="text-red-500 group-hover:scale-110 transition-transform" />
+          <div className="p-3 bg-emerald-50 rounded-xl w-fit mb-4">
+            <Trophy className="text-emerald-600 group-hover:scale-110 transition-transform" />
           </div>
           <h3 className="font-bold text-base sm:text-lg text-gray-800">
-            Assign Punishment
+            Grant Achievement
           </h3>
           <p className="text-sm text-gray-500 mt-1">
-            Report student issues and manage discipline.
+            Award points for student excellence.
           </p>
         </Link>
-
         <Link
           href="/usthad/attachments"
           className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group"
@@ -226,17 +224,17 @@ export default function UsthadDashboard() {
         </Link>
 
         <Link
-          href="/usthad/achievements"
-          className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all group"
+          href="/usthad/punishments"
+          className="bg-white border border-gray-200 rounded-2xl p-5 sm:p-6 shadow-sm hover:shadow-md hover:border-red-200 transition-all group"
         >
-          <div className="p-3 bg-emerald-50 rounded-xl w-fit mb-4">
-            <Trophy className="text-emerald-600 group-hover:scale-110 transition-transform" />
+          <div className="p-3 bg-red-50 rounded-xl w-fit mb-4">
+            <AlertTriangle className="text-red-500 group-hover:scale-110 transition-transform" />
           </div>
           <h3 className="font-bold text-base sm:text-lg text-gray-800">
-            Grant Achievement
+            Assign Behavioral credits
           </h3>
           <p className="text-sm text-gray-500 mt-1">
-            Award points for student excellence.
+            Report student issues and manage discipline.
           </p>
         </Link>
       </div>

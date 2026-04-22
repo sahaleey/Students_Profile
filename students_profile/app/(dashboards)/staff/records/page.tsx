@@ -12,6 +12,7 @@ import {
   FileText,
   ShieldAlert,
   CheckCircle2,
+  User,
 } from "lucide-react";
 
 export default function DepartmentRecordsPage() {
