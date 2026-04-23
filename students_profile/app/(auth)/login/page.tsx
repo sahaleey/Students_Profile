@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { User, Lock, LogIn } from "lucide-react";
 import { fetchFirebaseToken } from "@/lib/firebase";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -115,6 +116,13 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#003634] via-[#00665e] to-[#009689] flex items-center justify-center p-4">
+      <Image
+        src="/campus-bg.jpg"
+        alt="Campus Background"
+        fill
+        className="absolute inset-0 object-cover opacity-20"
+        priority
+      />
       {/* Glassmorphism Card */}
       <div className="relative z-10 w-full max-w-md">
         <div className="backdrop-blur-xl bg-white/30 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
