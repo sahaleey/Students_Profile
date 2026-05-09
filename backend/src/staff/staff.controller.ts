@@ -16,8 +16,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { Punishment } from '../usthad/entities/punishment.entity';
-import { Achievement } from '../usthad/entities/achievement.entity'; // 🚀 Imported
-import { AcademicMonth } from '../admin/entities/academic-month.entity'; // 🚀 Imported
+import { Achievement } from '../usthad/entities/achievement.entity';
+import { AcademicMonth } from '../admin/entities/academic-month.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { StaffService } from './staff.service';
 import { StaffProgram } from './entities/staff-program.entity';
@@ -30,16 +30,16 @@ type AuthenticatedRequest = {
 
 @Controller('staff')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(Role.STAFF) // 🚀 Only Staff can access
+@Roles(Role.STAFF) // 🚀 Master Staff Access
 export class StaffController {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Punishment)
     private punishmentRepo: Repository<Punishment>,
     @InjectRepository(Achievement)
-    private achievementRepo: Repository<Achievement>, // 🚀 Injected
+    private achievementRepo: Repository<Achievement>,
     @InjectRepository(AcademicMonth)
-    private monthRepo: Repository<AcademicMonth>, // 🚀 Injected
+    private monthRepo: Repository<AcademicMonth>,
     private notifService: NotificationsService,
     private staffService: StaffService,
     @InjectRepository(StaffProgram)
@@ -47,7 +47,7 @@ export class StaffController {
   ) {}
 
   // ==========================================
-  // 1. LIBRARY ONLY: Assign Fines
+  // 1. ALL STAFF: Assign Fines (Centralized)
   // ==========================================
   @Post('fines')
   async assignLibraryFine(
@@ -60,13 +60,11 @@ export class StaffController {
       amount: string;
     },
   ) {
-    // Security Check: Are they actually Library staff?
+    // 🚀 REMOVED the strict 'Library' department check. All staff can do this now.
     const staff = await this.userRepo.findOne({
       where: { id: req.user.userId },
     });
-    if (!staff || staff.department !== 'Library') {
-      throw new ForbiddenException('Only Library staff can issue book fines.');
-    }
+    if (!staff) throw new NotFoundException('Staff profile not found.');
 
     const fine = this.punishmentRepo.create({
       title: `${body.title} (₹${body.amount})`,
@@ -88,10 +86,12 @@ export class StaffController {
 
     return fine;
   }
+
   @Get('dashboard')
   getDashboard(@Request() req: AuthenticatedRequest) {
     return this.staffService.getDashboardData(req.user.userId);
   }
+
   // ==========================================
   // 2. ALL STAFF: Grant Achievements
   // ==========================================
@@ -104,6 +104,7 @@ export class StaffController {
       title: string;
       points: number;
       isSpecialHighlight?: boolean;
+      department?: string; // 🚀 Accept the department from the frontend payload
     },
   ) {
     const staff = await this.userRepo.findOne({
@@ -111,14 +112,12 @@ export class StaffController {
     });
     if (!staff) throw new NotFoundException('Staff profile not found.');
 
-    // Fetch student with parent so we can notify the parent too!
     const studentWithParent = await this.userRepo.findOne({
       where: { id: body.studentId },
       relations: ['parent'],
     });
     if (!studentWithParent) throw new NotFoundException('Student not found.');
 
-    // Fetch the active academic month
     const activeMonthRecord = await this.monthRepo.findOne({
       where: { isActive: true },
     });
@@ -126,11 +125,9 @@ export class StaffController {
       ? activeMonthRecord.name
       : 'Default Term';
 
-    // 🚀 Prefix the title so it looks official (e.g., "[Outreach] Best Volunteer")
-    const formattedTitle = `[${staff.department || 'Staff'}] ${body.title}`;
-
+    // 🚀 We no longer format the title here, the frontend handles [Library] prefixes!
     const achievement = this.achievementRepo.create({
-      title: formattedTitle,
+      title: body.title,
       points: body.points,
       isSpecialHighlight: body.isSpecialHighlight || false,
       awardedBy: { id: staff.id },
@@ -139,21 +136,23 @@ export class StaffController {
     });
     const saved = await this.achievementRepo.save(achievement);
 
+    const deptName = body.department || 'Central Staff';
+
     // 🚀 Notify Student
     await this.notifService.sendNotification({
       recipientId: body.studentId,
       title: 'New Achievement Granted! 🌟',
-      message: `You earned +${body.points} points from the ${staff.department} department for: ${body.title}.`,
+      message: `You earned +${body.points} points from ${deptName} for: ${body.title}.`,
       type: 'SUCCESS',
       link: '/student',
     });
 
-    // 🚀 Notify Parent (if they exist)
+    // 🚀 Notify Parent
     if (studentWithParent.parent) {
       await this.notifService.sendNotification({
         recipientId: studentWithParent.parent.id,
         title: 'Great News! 🌟',
-        message: `Your child ${studentWithParent.fullName} earned +${body.points} points from the ${staff.department} department!`,
+        message: `Your child ${studentWithParent.fullName} earned +${body.points} points from ${deptName}!`,
         type: 'SUCCESS',
         link: '/parent/dashboard',
       });
@@ -161,28 +160,30 @@ export class StaffController {
 
     return saved;
   }
+
   @Get('records')
   getRecords(@Request() req: any) {
     return this.staffService.getDepartmentRecords(req.user.userId);
   }
+
+  // ==========================================
+  // 3. ALL STAFF: Create Programs
+  // ==========================================
   @Post('programs')
   async createProgram(
     @Request() req: any,
-    @Body() body: { title: string; description: string },
+    @Body() body: { title: string; description: string; department?: string },
   ) {
     const staff = await this.userRepo.findOne({
       where: { id: req.user.userId },
     });
-    if (!staff || staff.department === 'Library') {
-      throw new ForbiddenException(
-        'Only Outreach and Welfare can log departmental programs.',
-      );
-    }
+    if (!staff) throw new NotFoundException('Staff profile not found.');
 
+    // 🚀 REMOVED the strict 'Outreach/Welfare' check.
     const program = this.programRepo.create({
       title: body.title,
       description: body.description,
-      department: staff.department,
+      department: body.department || 'Central', // Fallback to central if not provided
       createdBy: { id: staff.id },
     });
     return this.programRepo.save(program);
@@ -190,13 +191,9 @@ export class StaffController {
 
   @Get('programs')
   async getMyDepartmentPrograms(@Request() req: any) {
-    const staff = await this.userRepo.findOne({
-      where: { id: req.user.userId },
-    });
-    if (!staff) throw new NotFoundException('Staff not found');
-
+    // 🚀 Since staff is unified, we return ALL programs created by staff,
+    // or you can adjust this if you add frontend filters later.
     return this.programRepo.find({
-      where: { department: staff.department },
       relations: ['createdBy'],
       order: { date: 'DESC' },
     });

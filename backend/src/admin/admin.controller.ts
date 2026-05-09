@@ -102,6 +102,7 @@ export class AdminController {
   }
 
   @Get('arrivals/status')
+  @Roles(Role.ADMIN, Role.USTHAD)
   getArrivalStatus() {
     return this.adminService.getArrivalGateStatus();
   }

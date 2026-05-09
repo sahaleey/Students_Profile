@@ -9,7 +9,6 @@ import {
   GraduationCap,
   Key,
   Sparkles,
-  Briefcase, // 🚀 Imported new icon for departments
 } from "lucide-react";
 
 export default function AdminCentre() {
@@ -17,12 +16,11 @@ export default function AdminCentre() {
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  // Form State
+  // Form State - 🚀 Removed 'department'
   const [formData, setFormData] = useState({
     fullName: "",
     role: "student",
     class: "1",
-    department: "Library", // 🚀 Added default department state
     username: "",
     password: "campus123",
   });
@@ -35,7 +33,7 @@ export default function AdminCentre() {
     setError("");
     setSuccessMsg("");
 
-    // 🚀 Dynamic Payload Construction
+    // Dynamic Payload Construction
     let payload: any = {
       fullName: formData.fullName,
       role: formData.role,
@@ -45,13 +43,12 @@ export default function AdminCentre() {
 
     if (formData.role === "student") {
       payload.class = formData.class;
-    } else if (formData.role === "staff") {
-      payload.department = formData.department; // 🚀 Include department if Staff!
     }
+    // 🚀 Removed the staff department payload injection here
 
     try {
       const response = await fetch(
-        "https://students-profile.onrender.com/admin/users",
+        "https://students-profile.onrender.com/admin/users", // Fixed the URL to your live backend
         {
           method: "POST",
           headers: {
@@ -70,11 +67,12 @@ export default function AdminCentre() {
       }
 
       setSuccessMsg(`User ${formData.fullName} created successfully!`);
+
+      // Reset Form - 🚀 Removed 'department'
       setFormData({
         fullName: "",
         role: "student",
         class: "1",
-        department: "Library",
         username: "",
         password: "campus123",
       });
@@ -188,10 +186,10 @@ export default function AdminCentre() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 gap-5">
             {/* DYNAMIC CLASS FIELD - Only shows for students */}
             {formData.role === "student" && (
-              <div className="animate-slideIn">
+              <div className="animate-slideIn md:w-[48%]">
                 <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                   <GraduationCap size={14} /> Class / Batch
                 </label>
@@ -210,29 +208,10 @@ export default function AdminCentre() {
                 </select>
               </div>
             )}
-
-            {/* 🚀 DYNAMIC DEPARTMENT FIELD - Only shows for Staff */}
-            {formData.role === "staff" && (
-              <div className="animate-slideIn">
-                <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                  <Briefcase size={14} /> Department
-                </label>
-                <select
-                  value={formData.department}
-                  onChange={(e) =>
-                    setFormData({ ...formData, department: e.target.value })
-                  }
-                  className="w-full mt-1.5 p-3 bg-white/80 backdrop-blur-sm border text-black border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-teal-500 transition-all cursor-pointer"
-                >
-                  <option value="Library">Library</option>
-                  <option value="Outreach">Outreach</option>
-                  <option value="Welfare">Welfare</option>
-                </select>
-              </div>
-            )}
+            {/* 🚀 Removed the entire Staff Department UI Block */}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
             {/* Username */}
             <div>
               <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -247,7 +226,7 @@ export default function AdminCentre() {
                 }
                 placeholder={
                   formData.role === "staff"
-                    ? "e.g., library1"
+                    ? "e.g., staff1 or masterstaff"
                     : "e.g., 1080 or teacher1"
                 }
                 className="w-full mt-1.5 p-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl outline-none text-black focus:border-[#004643] focus:ring-2 focus:ring-[#004643]/20 transition-all placeholder:text-gray-400"
@@ -298,14 +277,7 @@ export default function AdminCentre() {
                   </p>
                 </div>
               )}
-              {formData.role === "staff" && formData.department && (
-                <div className="ml-auto text-right">
-                  <p className="text-xs text-gray-500">Department</p>
-                  <p className="font-semibold text-teal-800">
-                    {formData.department}
-                  </p>
-                </div>
-              )}
+              {/* 🚀 Removed the Staff Department preview logic here */}
             </div>
           </div>
 
@@ -340,8 +312,8 @@ export default function AdminCentre() {
             <p className="text-xs font-semibold text-gray-700">Admin Tips</p>
             <p className="text-xs text-gray-600 mt-0.5">
               • Student usernames should be their admission numbers
-              <br />• Staff usernames should be simple (e.g., library1,
-              outreach_admin)
+              <br />• Staff usernames should be simple (e.g., staff1,
+              central_staff)
             </p>
           </div>
         </div>

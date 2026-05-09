@@ -318,29 +318,7 @@ export default function DashboardLayout({
           label: `${userDept} Dashboard`,
           icon: LayoutDashboard,
         },
-        {
-          href: "/staff/achievements",
-          label: "Record Achievement",
-          icon: Award,
-        },
       ];
-
-      // 🚀 3. Add specific routes based on their department!
-      if (userDept === "Library") {
-        navItems.push({
-          href: "/staff/fines",
-          label: "Library Fines",
-          icon: Coins,
-        });
-      }
-
-      if (userDept === "Outreach" || userDept === "Welfare") {
-        navItems.push({
-          href: "/staff/programs",
-          label: "Manage Programs",
-          icon: ClipboardList,
-        });
-      }
     } else if (userRole === "parent") {
       navItems = [{ href: "/parent", label: "My Children", icon: Users }];
     }

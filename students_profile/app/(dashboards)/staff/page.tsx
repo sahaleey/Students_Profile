@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from "react";
 import {
-  LayoutDashboard,
-  Award,
-  Users,
   BookOpen,
+  Users,
   HeartHandshake,
   Coins,
   Clock,
+  Award,
   Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -37,145 +37,171 @@ export default function StaffDashboard() {
 
   if (isLoading)
     return (
-      <div className="text-center mt-20 animate-pulse font-bold text-indigo-600">
-        Loading Portal...
-      </div>
-    );
-  if (!data)
-    return (
-      <div className="text-center mt-20 text-red-500">
-        Error loading dashboard.
+      <div className="flex justify-center items-center h-64">
+        <div className="w-8 h-8 border-4 border-[#004643] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
 
-  const isLibrary = data.department === "Library";
-  const isOutreach = data.department === "Outreach";
-  const isWelfare = data.department === "Welfare";
+  if (!data)
+    return (
+      <div className="text-center mt-20 text-red-500 font-bold">
+        Error loading unified dashboard.
+      </div>
+    );
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-fadeInUp">
-      {/* Dynamic Header */}
-      <div
-        className={`p-8 rounded-3xl border shadow-lg flex flex-col md:flex-row items-center justify-between gap-6 ${
-          isLibrary
-            ? "bg-amber-50 border-amber-200"
-            : isOutreach
-              ? "bg-blue-50 border-blue-200"
-              : "bg-rose-50 border-rose-200"
-        }`}
-      >
+      {/* 🌟 UNIFIED MASTER HEADER */}
+      <div className="p-8 rounded-3xl border border-[#004643]/20 bg-gradient-to-br from-[#004643]/5 to-[#00665e]/10 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-5">
-          <div
-            className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-md ${
-              isLibrary
-                ? "bg-amber-500"
-                : isOutreach
-                  ? "bg-blue-600"
-                  : "bg-rose-500"
-            }`}
-          >
-            {isLibrary ? (
-              <BookOpen size={32} />
-            ) : isOutreach ? (
-              <Users size={32} />
-            ) : (
-              <HeartHandshake size={32} />
-            )}
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#004643] to-[#00665e] flex items-center justify-center text-white shadow-lg">
+            <Sparkles size={32} />
           </div>
           <div>
-            <h1
-              className={`text-3xl font-black ${isLibrary ? "text-amber-900" : isOutreach ? "text-blue-900" : "text-rose-900"}`}
-            >
-              {data.department} Department
+            <h1 className="text-3xl font-black text-[#004643]">
+              Central Staff Portal
             </h1>
             <p className="text-gray-600 font-medium mt-1">
-              {isLibrary
-                ? "Manage books, library programs, and issue fines."
-                : "Log student publications, outreach activities, and welfare achievements."}
+              Manage Library, Outreach, and Welfare departments from one place.
             </p>
           </div>
         </div>
-        <Link
-          href="/staff/achievements"
-          className={`px-6 py-3 rounded-xl font-bold text-white shadow-md transition-transform hover:scale-105 ${
-            isLibrary
-              ? "bg-amber-600 hover:bg-amber-700"
-              : isOutreach
-                ? "bg-blue-600 hover:bg-blue-700"
-                : "bg-rose-600 hover:bg-rose-700"
-          }`}
-        >
-          + Record Achievement
-        </Link>
       </div>
 
-      {/* Stats Row */}
+      {/* 🗂️ THE 3 DEPARTMENT CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-4">
+        {/* 1. Library Card */}
+        <div className="bg-white rounded-3xl p-6 border border-amber-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-bl-full -z-10 group-hover:scale-110 transition-transform"></div>
+          <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mb-4">
+            <BookOpen size={24} />
+          </div>
+          <h2 className="text-xl font-bold text-amber-900 mb-2">Library</h2>
+          <p className="text-sm text-gray-500 mb-6 min-h-[40px]">
+            Manage books, reading programs, and track library discipline.
+          </p>
+          <div className="flex flex-col gap-2">
+            <Link
+              href="/staff/achievements?dept=Library"
+              className="w-full flex items-center justify-between px-4 py-2 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-colors font-medium text-sm"
+            >
+              Record Achievement <ArrowRight size={16} />
+            </Link>
+            <Link
+              href="/staff/fines"
+              className="w-full flex items-center justify-between px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors font-medium text-sm"
+            >
+              Issue Library Fine <Coins size={16} />
+            </Link>
+          </div>
+        </div>
+
+        {/* 2. Outreach Card */}
+        <div className="bg-white rounded-3xl p-6 border border-blue-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -z-10 group-hover:scale-110 transition-transform"></div>
+          <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4">
+            <Users size={24} />
+          </div>
+          <h2 className="text-xl font-bold text-blue-900 mb-2">Outreach</h2>
+          <p className="text-sm text-gray-500 mb-6 min-h-[40px]">
+            Log student publications and public communication activities.
+          </p>
+          <div className="flex flex-col gap-2 mt-auto">
+            <Link
+              href="/staff/achievements?dept=Outreach"
+              className="w-full flex items-center justify-between px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors font-medium text-sm"
+            >
+              Record Achievement <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+
+        {/* 3. Welfare Card */}
+        <div className="bg-white rounded-3xl p-6 border border-rose-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-rose-50 rounded-bl-full -z-10 group-hover:scale-110 transition-transform"></div>
+          <div className="w-12 h-12 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mb-4">
+            <HeartHandshake size={24} />
+          </div>
+          <h2 className="text-xl font-bold text-rose-900 mb-2">Welfare</h2>
+          <p className="text-sm text-gray-500 mb-6 min-h-[40px]">
+            Track social work, volunteering, and student support initiatives.
+          </p>
+          <div className="flex flex-col gap-2 mt-auto">
+            <Link
+              href="/staff/achievements?dept=Welfare"
+              className="w-full flex items-center justify-between px-4 py-2 bg-rose-50 text-rose-700 rounded-lg hover:bg-rose-100 transition-colors font-medium text-sm"
+            >
+              Record Achievement <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* 📊 OVERALL STATS ROW */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
           <div className="p-4 bg-emerald-100 text-emerald-600 rounded-xl">
             <Award size={24} />
           </div>
           <div>
-            <p className="text-sm font-bold text-gray-500 uppercase">
-              Achievements Logged
+            <p className="text-xs font-bold text-gray-500 uppercase">
+              Total Achievements Logged
             </p>
             <p className="text-2xl font-black text-gray-900">
-              {data.stats.totalAchievements}
+              {data.stats?.totalAchievements || 0}
             </p>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-4">
-          <div className="p-4 bg-indigo-100 text-indigo-600 rounded-xl">
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+          <div className="p-4 bg-[#004643]/10 text-[#004643] rounded-xl">
             <Sparkles size={24} />
           </div>
           <div>
-            <p className="text-sm font-bold text-gray-500 uppercase">
-              Total Points Given
+            <p className="text-xs font-bold text-gray-500 uppercase">
+              Total Points Distributed
             </p>
             <p className="text-2xl font-black text-gray-900">
-              {data.stats.totalPointsGiven}
+              {data.stats?.totalPointsGiven || 0}
             </p>
           </div>
         </div>
-        {isLibrary && (
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-4">
-            <div className="p-4 bg-amber-100 text-amber-600 rounded-xl">
-              <Coins size={24} />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-500 uppercase">
-                Fines Issued
-              </p>
-              <p className="text-2xl font-black text-gray-900">
-                {data.stats.totalFinesIssued}
-              </p>
-            </div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+          <div className="p-4 bg-amber-100 text-amber-600 rounded-xl">
+            <Coins size={24} />
           </div>
-        )}
+          <div>
+            <p className="text-xs font-bold text-gray-500 uppercase">
+              Total Fines Issued
+            </p>
+            <p className="text-2xl font-black text-gray-900">
+              {data.stats?.totalFinesIssued || 0}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Recent Activity Timeline */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="bg-gray-50 p-5 border-b border-gray-200 flex items-center gap-2">
+      {/* 🕒 GLOBAL RECENT ACTIVITY */}
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-gray-50 p-5 border-b border-gray-100 flex items-center gap-2">
           <Clock size={20} className="text-gray-500" />
           <h2 className="font-bold text-lg text-gray-800">
-            Recent Department Activity
+            Combined Recent Activity
           </h2>
         </div>
-        <div className="divide-y divide-gray-100">
-          {data.recentActivities.length === 0 ? (
+        <div className="divide-y divide-gray-50">
+          {!data.recentActivities || data.recentActivities.length === 0 ? (
             <p className="p-8 text-center text-gray-500">
-              No recent activity recorded by you.
+              No recent activity recorded yet.
             </p>
           ) : (
             data.recentActivities.map((act: any) => (
               <div
                 key={act.id}
-                className="p-5 flex items-center justify-between hover:bg-gray-50"
+                className="p-5 flex items-center justify-between hover:bg-gray-50/50 transition-colors"
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className={`p-2.5 rounded-xl ${act.type === "Achievement" ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"}`}
+                    className={`p-3 rounded-xl ${act.type === "Achievement" ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"}`}
                   >
                     {act.type === "Achievement" ? (
                       <Award size={20} />
@@ -185,25 +211,26 @@ export default function StaffDashboard() {
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-900">{act.title}</h3>
-                    <p className="text-sm text-gray-500">
-                      Awarded to:{" "}
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      Student:{" "}
                       <span className="font-bold text-gray-700 capitalize">
                         {act.studentName}
                       </span>
+                      {act.department && ` • Dept: ${act.department}`}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   {act.type === "Achievement" ? (
-                    <span className="font-black text-emerald-600 text-lg">
+                    <span className="font-black text-emerald-600">
                       +{act.points} pts
                     </span>
                   ) : (
-                    <span className="font-black text-amber-600 text-sm bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
+                    <span className="font-black text-amber-600 text-xs bg-amber-50 px-2 py-1 rounded-md border border-amber-200">
                       FINE
                     </span>
                   )}
-                  <p className="text-xs text-gray-400 mt-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-1">
                     {new Date(act.date).toLocaleDateString()}
                   </p>
                 </div>
