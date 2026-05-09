@@ -9,6 +9,7 @@ import {
   Medal,
   Trash2,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface Student {
   id: string;
@@ -69,8 +70,11 @@ export default function AchievementsPage() {
 
       if (stuRes.ok) setRawStudents(await stuRes.json());
       if (achRes.ok) setAchievements(await achRes.json());
-    } catch (error) {
-      console.error("Failed to fetch data:", error);
+    } catch (error: unknown) {
+      console.error(
+        "Failed to fetch data:",
+        error instanceof Error ? error.message : error,
+      );
     }
   };
 
@@ -109,6 +113,15 @@ export default function AchievementsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudent || !formData.title || !formData.points) return;
+
+    const pointsValue = parseInt(formData.points, 10);
+
+    if (pointsValue < 1 || pointsValue > 20) {
+      toast.error("Points must be between 1 and 20 per achievement.");
+      return;
+    }
+
+    const toastId = toast.loading("Granting achievement...");
     setIsSubmitting(true);
 
     try {
@@ -123,18 +136,25 @@ export default function AchievementsPage() {
           body: JSON.stringify({
             studentId: selectedStudent.id,
             title: formData.title,
-            points: parseInt(formData.points, 10),
+            points: pointsValue,
             isSpecialHighlight: isSpecialHighlight,
           }),
         },
       );
 
-      if (!response.ok) throw new Error("Failed to grant achievement");
+      // 🛡️ BACKEND LAYER
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to grant achievement");
+      }
 
       resetWizard();
-      await fetchData(); // Refresh the list
-    } catch (error) {
-      alert("Error granting achievement. Please try again.");
+      await fetchData();
+
+      toast.success("Achievement granted successfully!", { id: toastId });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      toast.error(`Oops: ${message}`, { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
@@ -156,7 +176,11 @@ export default function AchievementsPage() {
         },
       );
       if (!response.ok) throw new Error("Failed to delete");
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error(
+        "Error removing achievement:",
+        error instanceof Error ? error.message : error,
+      );
       alert("Error removing achievement.");
       await fetchData();
     }
