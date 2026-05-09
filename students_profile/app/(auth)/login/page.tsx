@@ -128,8 +128,15 @@ export default function LoginPage() {
         <div className="backdrop-blur-xl bg-white/30 rounded-3xl shadow-2xl overflow-hidden border border-white/20">
           {/* Header */}
           <div className="relative bg-gradient-to-br from-[#004643]/90 to-[#004643]/70 backdrop-blur-sm p-8 text-center border-b border-white/20">
-            <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/30">
-              <User size={32} className="text-white" />
+            <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white/30 overflow-hidden">
+              <Image
+                src="/icon-512.png"
+                alt="College Logo"
+                width={70}
+                height={70}
+                className="object-contain rounded-xl"
+                priority
+              />
             </div>
             <h1 className="text-3xl font-bold text-white tracking-tight">
               Campus Portal

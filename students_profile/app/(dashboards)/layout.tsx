@@ -34,6 +34,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { fetchFirebaseToken } from "@/lib/firebase";
+import Image from "next/image";
 
 export default function DashboardLayout({
   children,
@@ -256,7 +257,7 @@ export default function DashboardLayout({
         { href: "/usthad/attachments", label: "Attachments", icon: FileCheck },
         {
           href: "/usthad/punishments",
-          label: "Punishments",
+          label: "Behavioral Credits",
           icon: AlertOctagon,
         },
         { href: "/usthad/students", label: "Students Status", icon: Info },
@@ -396,7 +397,7 @@ export default function DashboardLayout({
               {userRole === "admin" ? (
                 <Shield size={20} />
               ) : (
-                <LayoutDashboard size={20} />
+                <Image src="/icon.png" alt="Logo" width={24} height={24} />
               )}
             </div>
             <div>

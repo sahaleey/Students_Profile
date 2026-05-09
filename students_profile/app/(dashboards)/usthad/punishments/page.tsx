@@ -349,7 +349,7 @@ export default function PunishmentsPage() {
                 </div>
                 <div>
                   <label className="text-sm font-bold text-gray-700">
-                    Punishment Name
+                    Action Name
                   </label>
                   <input
                     type="text"
@@ -415,13 +415,14 @@ export default function PunishmentsPage() {
       <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden h-[600px] flex flex-col">
         <div className="bg-gray-50 p-4 border-b border-gray-100">
           <h2 className="font-bold text-gray-800 flex items-center gap-2">
-            <FileText size={18} className="text-gray-500" /> Punishment Records
+            <FileText size={18} className="text-gray-500" /> Behavioral Credits
+            Records
           </h2>
         </div>
         <div className="p-4 flex-1 overflow-y-auto space-y-3">
           {punishments.length === 0 ? (
             <p className="text-center text-gray-400 mt-10">
-              No punishments recorded yet.
+              No Actions recorded yet.
             </p>
           ) : (
             punishments.map((p) => (
