@@ -397,7 +397,13 @@ export default function DashboardLayout({
               {userRole === "admin" ? (
                 <Shield size={20} />
               ) : (
-                <Image src="/icon.png" alt="Logo" width={24} height={24} />
+                <Image
+                  src="/icon.png"
+                  alt="Logo"
+                  width={34}
+                  height={34}
+                  className="rounded-xl"
+                />
               )}
             </div>
             <div>
