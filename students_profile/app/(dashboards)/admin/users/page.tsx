@@ -9,8 +9,11 @@ import {
   Shield,
   GraduationCap,
   BookOpen,
-  Filter, // Added a nice icon for the filters
+  Filter,
+  ChevronLeft, // 🚀 Added
+  ChevronRight, // 🚀 Added
 } from "lucide-react";
+import toast from "react-hot-toast"; // 🚀 Added for premium notifications
 
 interface User {
   id: string;
@@ -18,7 +21,7 @@ interface User {
   username: string;
   role: string;
   isActive: boolean;
-  class?: string; // NOTE: I changed this back to 'class' assuming your backend sends it as 'class'
+  class?: string;
   currentMonthPoints?: number;
   pastMonthPoints?: number;
 }
@@ -27,11 +30,15 @@ export default function ManageUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // 1. NEW STATE: Filter selections
+  // Filter selections
   const [filterRole, setFilterRole] = useState("all");
   const [filterClass, setFilterClass] = useState("all");
 
   const [isLoading, setIsLoading] = useState(true);
+
+  // 🚀 Added Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 8; // Adjust based on how many you want to show
 
   const getToken = () => localStorage.getItem("token");
 
@@ -48,6 +55,7 @@ export default function ManageUsers() {
       setUsers(data);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to load users");
     } finally {
       setIsLoading(false);
     }
@@ -57,8 +65,14 @@ export default function ManageUsers() {
     fetchUsers();
   }, []);
 
+  // 🚀 Reset to Page 1 whenever ANY filter changes!
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterRole, filterClass]);
+
   const toggleAccess = async (id: string, currentStatus: boolean) => {
     try {
+      // Optimistic UI Update
       setUsers(
         users.map((u) =>
           u.id === id ? { ...u, isActive: !currentStatus } : u,
@@ -77,18 +91,19 @@ export default function ManageUsers() {
       );
 
       if (!response.ok) throw new Error("Failed");
+      toast.success(currentStatus ? "Access revoked." : "Access restored.");
     } catch (err) {
-      await fetchUsers();
-      alert("Error updating user access.");
+      await fetchUsers(); // Revert on failure
+      toast.error("Error updating user access.");
     }
   };
 
-  // 2. DYNAMIC CLASSES: Extract unique classes from the data so we don't hardcode them
+  // Extract unique classes
   const availableClasses = Array.from(
     new Set(users.map((u) => u.class).filter(Boolean)),
-  ).sort(); // Sorts them alphabetically
+  ).sort();
 
-  // 3. THE WATERFALL FILTER
+  // THE WATERFALL FILTER
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
       u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -96,13 +111,12 @@ export default function ManageUsers() {
 
     const matchesRole = filterRole === "all" || u.role === filterRole;
 
-    // Only check class if a specific class is selected
     const matchesClass = filterClass === "all" || u.class === filterClass;
 
     return matchesSearch && matchesRole && matchesClass;
   });
 
-  // 4. Custom Sorting Logic (Unchanged, it just sorts whatever survives the filter)
+  // Custom Sorting Logic
   const roleWeights: Record<string, number> = {
     admin: 1,
     usthad: 2,
@@ -126,6 +140,14 @@ export default function ManageUsers() {
     return classA.localeCompare(classB);
   });
 
+  // 🚀 Calculate Pagination Data
+  const totalPages =
+    Math.ceil(sortedAndFilteredUsers.length / ITEMS_PER_PAGE) || 1;
+  const paginatedUsers = sortedAndFilteredUsers.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-12 animate-fadeInUp">
       <div className="flex items-center justify-between">
@@ -143,8 +165,7 @@ export default function ManageUsers() {
       </div>
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-[75vh]">
-        <div className="p-5 border-b border-gray-200 bg-gray-50 space-y-4">
-          {/* 5. UPDATED UI: Added Flexbox to hold Search and Dropdowns */}
+        <div className="p-5 border-b border-gray-200 bg-gray-50 space-y-4 shrink-0">
           <div className="flex flex-col md:flex-row gap-4">
             {/* Search Bar */}
             <div className="relative flex-1">
@@ -168,7 +189,6 @@ export default function ManageUsers() {
                 value={filterRole}
                 onChange={(e) => {
                   setFilterRole(e.target.value);
-                  // Reset class filter if we switch to a role that doesn't have classes (like admin)
                   if (
                     e.target.value !== "student" &&
                     e.target.value !== "all"
@@ -187,7 +207,7 @@ export default function ManageUsers() {
               </select>
             </div>
 
-            {/* Class Filter (Disabled if searching for non-students) */}
+            {/* Class Filter */}
             <select
               value={filterClass}
               onChange={(e) => setFilterClass(e.target.value)}
@@ -204,24 +224,35 @@ export default function ManageUsers() {
           </div>
         </div>
 
+        {/* 🚀 Render paginatedUsers instead of sortedAndFilteredUsers */}
         <div className="flex-1 overflow-y-auto p-4">
           {isLoading ? (
-            <div className="flex justify-center items-center h-full text-gray-400">
+            <div className="flex justify-center items-center h-full text-gray-400 animate-pulse">
               Loading directory...
             </div>
-          ) : sortedAndFilteredUsers.length === 0 ? (
+          ) : paginatedUsers.length === 0 ? (
             <div className="flex justify-center items-center h-full text-gray-400">
               No users match your filters.
             </div>
           ) : (
-            sortedAndFilteredUsers.map((user) => (
+            paginatedUsers.map((user) => (
               <div
                 key={user.id}
-                className={`flex items-center justify-between p-4 mb-3 rounded-xl border transition-all ${user.isActive ? "bg-white border-gray-100 hover:border-gray-300" : "bg-red-50/50 border-red-100 grayscale opacity-80"}`}
+                className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 mb-3 rounded-xl border transition-all gap-4 sm:gap-0 ${
+                  user.isActive
+                    ? "bg-white border-gray-100 hover:border-gray-300"
+                    : "bg-red-50/50 border-red-100 grayscale opacity-80"
+                }`}
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className={`p-3 rounded-xl ${user.role === "admin" ? "bg-purple-100 text-purple-700" : user.role === "student" ? "bg-blue-50 text-blue-600" : "bg-[#004643]/10 text-[#004643]"}`}
+                    className={`p-3 rounded-xl shrink-0 ${
+                      user.role === "admin"
+                        ? "bg-purple-100 text-purple-700"
+                        : user.role === "student"
+                          ? "bg-blue-50 text-blue-600"
+                          : "bg-[#004643]/10 text-[#004643]"
+                    }`}
                   >
                     {user.role === "admin" ? (
                       <Shield size={20} />
@@ -243,10 +274,9 @@ export default function ManageUsers() {
                   </div>
                 </div>
 
-                {/* 🚀 NEW Right Side: Points Display & Button */}
-                <div className="flex items-center gap-6">
+                <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
                   {user.role === "student" && (
-                    <div className="text-right hidden sm:block">
+                    <div className="text-left sm:text-right">
                       <p className="font-black text-[#004643] text-lg">
                         {user.currentMonthPoints || 0}{" "}
                         <span className="text-xs font-normal text-gray-500">
@@ -258,30 +288,57 @@ export default function ManageUsers() {
                       </p>
                     </div>
                   )}
-                </div>
 
-                <button
-                  onClick={() => toggleAccess(user.id, user.isActive)}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${
-                    user.isActive
-                      ? "bg-red-50 text-red-600 hover:bg-red-100"
-                      : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-                  }`}
-                >
-                  {user.isActive ? (
-                    <>
-                      <ShieldBan size={16} /> Revoke
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 size={16} /> Restore
-                    </>
-                  )}
-                </button>
+                  <button
+                    onClick={() => toggleAccess(user.id, user.isActive)}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ${
+                      user.isActive
+                        ? "bg-red-50 text-red-600 hover:bg-red-100"
+                        : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
+                    }`}
+                  >
+                    {user.isActive ? (
+                      <>
+                        <ShieldBan size={16} /> Revoke
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={16} /> Restore
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             ))
           )}
         </div>
+
+        {/* 🚀 Pagination Footer */}
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between shrink-0">
+            <button
+              type="button"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <span className="text-sm font-bold text-gray-500">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              type="button"
+              disabled={currentPage === totalPages}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              className="p-2 rounded-lg bg-white border border-gray-200 hover:bg-gray-100 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
