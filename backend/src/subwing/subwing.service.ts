@@ -37,6 +37,35 @@ export class SubwingService {
     return this.programRepo.save(program);
   }
 
+  // 🚀 NEW: Update an existing Program
+  async updateProgram(subWingId: string, programId: string, data: any) {
+    // Find the program ensuring it belongs to the logged-in subwing
+    const program = await this.programRepo.findOne({
+      where: { id: programId, createdBy: { id: subWingId } },
+    });
+
+    if (!program) {
+      throw new NotFoundException('Program not found or unauthorized');
+    }
+
+    // Merge the new data and save
+    Object.assign(program, data);
+    return this.programRepo.save(program);
+  }
+
+  // 🚀 NEW: Delete a Program
+  async deleteProgram(subWingId: string, programId: string) {
+    const program = await this.programRepo.findOne({
+      where: { id: programId, createdBy: { id: subWingId } },
+    });
+
+    if (!program) {
+      throw new NotFoundException('Program not found or unauthorized');
+    }
+
+    return this.programRepo.remove(program);
+  }
+
   // 2. Get Sub-Wing's Programs
   async getMyPrograms(subWingId: string) {
     return this.programRepo.find({
@@ -79,7 +108,7 @@ export class SubwingService {
       });
       results.push(result);
 
-      // 🚀 CRITICAL: Automatically create an Achievement so the student gets the points globally!
+      // CRITICAL: Automatically create an Achievement so the student gets the points globally!
       const achievement = this.achievementRepo.create({
         student: { id: winner.studentId },
         awardedBy: { id: subWingId }, // The Subwing gave it
@@ -88,12 +117,13 @@ export class SubwingService {
         points: winner.points,
       });
       achievements.push(achievement);
+
       let rankText = winner.rank
         ? `${winner.rank} Place`
         : `Grade ${winner.grade}`;
 
       await this.notifService.sendNotification({
-        recipientId: winner.studentId, // 🎯 Targeted strictly to this student
+        recipientId: winner.studentId, // Targeted strictly to this student
         title: 'Congratulations! 🏆',
         message: `You secured ${rankText} in the "${program.title}" program and earned +${winner.points} points!`,
         type: 'SUCCESS',
@@ -111,6 +141,7 @@ export class SubwingService {
 
     return { message: 'Results published successfully!' };
   }
+
   // 4. HISAN Analytics - A comprehensive performance dashboard for all Sub-Wings
   async getPublishedResults(subWingId: string) {
     return this.resultRepo.find({
@@ -119,6 +150,7 @@ export class SubwingService {
       order: { createdAt: 'DESC' },
     });
   }
+
   // 5. Get results for a specific student
   async getMyResults(studentId: string) {
     return this.resultRepo.find({

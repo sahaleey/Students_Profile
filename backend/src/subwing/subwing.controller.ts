@@ -2,6 +2,8 @@ import {
   Controller,
   Get,
   Post,
+  Put, // 🚀 Added
+  Delete, // 🚀 Added
   Body,
   Param,
   UseGuards,
@@ -22,6 +24,24 @@ export class SubwingController {
   @Post('programs')
   createProgram(@Request() req: any, @Body() body: any) {
     return this.subwingService.createProgram(req.user.userId, body);
+  }
+
+  // 🚀 NEW: Edit an existing program
+  @Roles(Role.SUBWING)
+  @Put('programs/:id')
+  updateProgram(
+    @Request() req: any,
+    @Param('id') programId: string,
+    @Body() body: any,
+  ) {
+    return this.subwingService.updateProgram(req.user.userId, programId, body);
+  }
+
+  // 🚀 NEW: Delete a program
+  @Roles(Role.SUBWING)
+  @Delete('programs/:id')
+  deleteProgram(@Request() req: any, @Param('id') programId: string) {
+    return this.subwingService.deleteProgram(req.user.userId, programId);
   }
 
   @Roles(Role.SUBWING) // Both Sub-Wings and Students can view programs
@@ -53,7 +73,7 @@ export class SubwingController {
   @Roles(Role.HISAN, Role.ADMIN) // HISAN's Eagle-Eye view
   @Get('analytics')
   async getHisanAnalytics() {
-    // 🚀 Aggregating massive data perfectly
+    // Aggregating massive data perfectly
     const allPrograms = await this.subwingService['programRepo'].find({
       relations: ['createdBy'],
     });
@@ -118,7 +138,6 @@ export class SubwingController {
       })),
     };
   }
-  // 3. Student's Personal Results - A dedicated endpoint for students to view their performance across all Sub-Wing programs
 
   @Roles(Role.STUDENT)
   @Get('my-results')

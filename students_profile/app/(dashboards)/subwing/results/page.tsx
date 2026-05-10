@@ -10,13 +10,17 @@ import {
   ArrowLeft,
   UserPlus,
   Medal,
+  ChevronLeft, // 🚀 Added
+  ChevronRight, // 🚀 Added
 } from "lucide-react";
+import toast from "react-hot-toast"; // 🚀 Added for premium notifications
 
 interface Student {
   id: string;
   fullName: string;
   username: string;
   class: string;
+  className?: string; // Used for flattened mapped data
 }
 
 interface Program {
@@ -24,11 +28,6 @@ interface Program {
   title: string;
   duration: string;
   status: string;
-}
-
-interface StudentGroup {
-  className: string;
-  students: Student[];
 }
 
 interface Winner {
@@ -48,9 +47,12 @@ export default function SubWingResultsPage() {
 
   // Dynamic array of winners!
   const [winners, setWinners] = useState<Winner[]>([]);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
+
+  // 🚀 Pagination States
+  const [currentProgramPage, setCurrentProgramPage] = useState(1);
+  const [currentStudentPage, setCurrentStudentPage] = useState(1);
+  const ITEMS_PER_PAGE = 7; // Fits well within the left column
 
   const getToken = () => localStorage.getItem("token");
 
@@ -68,13 +70,19 @@ export default function SubWingResultsPage() {
         if (progRes.ok) setPrograms(await progRes.json());
         if (stuRes.ok) setStudents(await stuRes.json());
       } catch (error) {
-        console.error("Failed to fetch data");
+        toast.error("Failed to fetch data from the server.");
       }
     };
     fetchData();
   }, []);
 
-  // --- Step 1: Program Filtering ---
+  // 🚀 Reset Pagination on search or step change
+  useEffect(() => {
+    setCurrentProgramPage(1);
+    setCurrentStudentPage(1);
+  }, [searchTerm, step]);
+
+  // --- Step 1: Program Filtering & Pagination ---
   const activePrograms = programs.filter(
     (p) => p.status !== "Results Declared",
   );
@@ -82,28 +90,31 @@ export default function SubWingResultsPage() {
     p.title.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  // --- Step 2: Student Grouping & Filtering ---
-  const groupedStudents = students.reduce<
-    Record<string, { className: string; students: Student[] }>
-  >((acc, student) => {
-    const cName = student.class ? `Class ${student.class}` : "Unassigned";
-    if (!acc[cName]) acc[cName] = { className: cName, students: [] };
-    acc[cName].students.push(student);
-    return acc;
-  }, {});
+  const totalProgramPages =
+    Math.ceil(filteredPrograms.length / ITEMS_PER_PAGE) || 1;
+  const paginatedPrograms = filteredPrograms.slice(
+    (currentProgramPage - 1) * ITEMS_PER_PAGE,
+    currentProgramPage * ITEMS_PER_PAGE,
+  );
 
-  const filteredStudents = Object.values(groupedStudents)
-    .map(
-      (group): StudentGroup => ({
-        ...group,
-        students: group.students.filter(
-          (s: Student) =>
-            s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            s.username.includes(searchTerm),
-        ),
-      }),
-    )
-    .filter((group) => group.students.length > 0);
+  // --- Step 2: Student Flattening & Pagination ---
+  const flatStudents: Student[] = students.map((s) => ({
+    ...s,
+    className: s.class || "Unassigned",
+  }));
+
+  const filteredStudents = flatStudents.filter(
+    (s) =>
+      s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.username.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
+
+  const totalStudentPages =
+    Math.ceil(filteredStudents.length / ITEMS_PER_PAGE) || 1;
+  const paginatedStudents = filteredStudents.slice(
+    (currentStudentPage - 1) * ITEMS_PER_PAGE,
+    currentStudentPage * ITEMS_PER_PAGE,
+  );
 
   // --- Handlers ---
   const handleSelectProgram = (prog: Program) => {
@@ -116,7 +127,7 @@ export default function SubWingResultsPage() {
     // Prevent adding the same student twice
     if (winners.some((w) => w.student.id === student.id)) return;
 
-    // Default 1st place gets 50, 2nd gets 30, 3rd gets 10 logic can be applied, defaulting to 10
+    // Default defaults
     setWinners([
       ...winners,
       { student: student, rank: "1st", grade: "A", points: 50 },
@@ -147,15 +158,17 @@ export default function SubWingResultsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProgram || winners.length === 0) {
-      alert("Please select a program and at least one winner.");
+      toast.error("Please select a program and at least one winner.");
       return;
     }
     if (winners.some((w) => !w.points)) {
-      alert("Please assign points to all winners.");
+      toast.error("Please assign points to all winners.");
       return;
     }
 
+    const toastId = toast.loading("Publishing results...");
     setIsSubmitting(true);
+
     try {
       const res = await fetch(
         `https://students-profile.onrender.com/subwing/programs/${selectedProgram.id}/results`,
@@ -178,17 +191,18 @@ export default function SubWingResultsPage() {
 
       if (!res.ok) throw new Error("Failed to publish results");
 
-      setSuccessMsg("Results published & points awarded successfully!");
+      toast.success("Results published & points awarded successfully!", {
+        id: toastId,
+      });
       setSelectedProgram(null);
       setWinners([]);
       setStep(1);
 
       setPrograms(programs.filter((p) => p.id !== selectedProgram.id));
     } catch (error) {
-      alert("Error publishing results.");
+      toast.error("Error publishing results.", { id: toastId });
     } finally {
       setIsSubmitting(false);
-      setTimeout(() => setSuccessMsg(""), 4000);
     }
   };
 
@@ -212,12 +226,6 @@ export default function SubWingResultsPage() {
           </p>
         </div>
       </div>
-
-      {successMsg && (
-        <div className="bg-emerald-50 text-emerald-600 p-4 rounded-xl flex items-center gap-3 border border-emerald-200">
-          <CheckCircle2 size={20} /> {successMsg}
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* LEFT COLUMN: 2-STEP WIZARD */}
@@ -255,8 +263,8 @@ export default function SubWingResultsPage() {
             </div>
           </div>
 
-          <div className="p-4 flex-1 overflow-y-auto">
-            <div className="relative mb-4">
+          <div className="p-4 flex-1 flex flex-col overflow-y-auto">
+            <div className="relative mb-4 shrink-0">
               <Search
                 className="absolute left-3 top-3 text-gray-400"
                 size={18}
@@ -276,86 +284,151 @@ export default function SubWingResultsPage() {
 
             {/* STEP 1: SHOW PROGRAMS */}
             {step === 1 && (
-              <div className="space-y-3 animate-slideIn">
-                {filteredPrograms.length > 0 ? (
-                  filteredPrograms.map((p) => (
+              <div className="flex-1 flex flex-col h-full animate-slideIn">
+                <div className="flex-1 space-y-3 overflow-y-auto min-h-[350px]">
+                  {paginatedPrograms.length > 0 ? (
+                    paginatedPrograms.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => handleSelectProgram(p)}
+                        className="w-full text-left p-4 rounded-xl border border-gray-200 bg-white hover:border-yellow-400 hover:shadow-md transition-all group"
+                      >
+                        <h3 className="font-bold text-gray-800 group-hover:text-yellow-600 transition-colors">
+                          {p.title}
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Ends: {p.duration}
+                        </p>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="text-center text-sm text-gray-500 mt-8">
+                      No active programs found.
+                    </p>
+                  )}
+                </div>
+
+                {/* 🚀 Programs Pagination */}
+                {totalProgramPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 shrink-0">
                     <button
-                      key={p.id}
-                      onClick={() => handleSelectProgram(p)}
-                      className="w-full text-left p-4 rounded-xl border border-gray-200 bg-white hover:border-yellow-400 hover:shadow-md transition-all group"
+                      type="button"
+                      disabled={currentProgramPage === 1}
+                      onClick={() =>
+                        setCurrentProgramPage((prev) => Math.max(prev - 1, 1))
+                      }
+                      className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                     >
-                      <h3 className="font-bold text-gray-800 group-hover:text-yellow-600 transition-colors">
-                        {p.title}
-                      </h3>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Ends: {p.duration}
-                      </p>
+                      <ChevronLeft size={20} />
                     </button>
-                  ))
-                ) : (
-                  <p className="text-center text-sm text-gray-500 mt-8">
-                    No active programs found.
-                  </p>
+                    <span className="text-sm font-bold text-gray-500 bg-gray-50 px-4 py-1.5 rounded-lg">
+                      Page {currentProgramPage} of {totalProgramPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={currentProgramPage === totalProgramPages}
+                      onClick={() =>
+                        setCurrentProgramPage((prev) =>
+                          Math.min(prev + 1, totalProgramPages),
+                        )
+                      }
+                      className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </div>
                 )}
               </div>
             )}
 
-            {/* STEP 2: SHOW CLASSED STUDENTS */}
+            {/* STEP 2: SHOW FLATTENED STUDENTS */}
             {step === 2 && (
-              <div className="space-y-6 animate-slideIn">
-                {filteredStudents.length > 0 ? (
-                  filteredStudents.map((group) => (
-                    <div key={group.className}>
-                      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 border-b pb-1">
-                        {group.className}
-                      </h3>
-                      <div className="space-y-2">
-                        {group.students.map((student: Student) => {
-                          const isSelected = winners.some(
-                            (w) => w.student.id === student.id,
-                          );
-                          return (
-                            <button
-                              key={student.id}
-                              onClick={() => handleAddWinner(student)}
-                              disabled={isSelected}
-                              className={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left ${
-                                isSelected
-                                  ? "bg-emerald-50 border-emerald-200 opacity-70 cursor-not-allowed"
-                                  : "bg-[#fafafa] border-gray-200 hover:border-yellow-400 hover:bg-yellow-50 group"
-                              }`}
+              <div className="flex-1 flex flex-col h-full animate-slideIn">
+                <div className="flex-1 space-y-2 overflow-y-auto min-h-[350px]">
+                  {paginatedStudents.length > 0 ? (
+                    paginatedStudents.map((student) => {
+                      const isSelected = winners.some(
+                        (w) => w.student.id === student.id,
+                      );
+                      return (
+                        <button
+                          key={student.id}
+                          onClick={() => handleAddWinner(student)}
+                          disabled={isSelected}
+                          className={`w-full flex items-center justify-between p-3 rounded-xl border transition-colors text-left ${
+                            isSelected
+                              ? "bg-emerald-50 border-emerald-200 opacity-70 cursor-not-allowed"
+                              : "bg-[#fafafa] border-gray-200 hover:border-yellow-400 hover:bg-yellow-50 group"
+                          }`}
+                        >
+                          <div>
+                            <p
+                              className={`font-bold capitalize ${isSelected ? "text-emerald-800" : "text-gray-800"}`}
                             >
-                              <div>
-                                <p
-                                  className={`font-bold ${isSelected ? "text-emerald-800" : "text-gray-800"}`}
-                                >
-                                  {student.fullName}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  Admn: {student.username}
-                                </p>
-                              </div>
-                              {isSelected ? (
-                                <CheckCircle2
-                                  size={18}
-                                  className="text-emerald-500"
-                                />
-                              ) : (
-                                <UserPlus
-                                  size={18}
-                                  className="text-gray-400 group-hover:text-yellow-600 transition-colors"
-                                />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-center text-sm text-gray-500 mt-8">
-                    No students found.
-                  </p>
+                              {student.fullName}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Admn: {student.username}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={`text-[10px] font-black uppercase px-2 py-1 rounded-md ${isSelected ? "bg-emerald-200 text-emerald-800" : "bg-gray-200 text-gray-700"}`}
+                            >
+                              Class {student.className}
+                            </span>
+                            {isSelected ? (
+                              <CheckCircle2
+                                size={18}
+                                className="text-emerald-500"
+                              />
+                            ) : (
+                              <UserPlus
+                                size={18}
+                                className="text-gray-400 group-hover:text-yellow-600 transition-colors"
+                              />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <p className="text-center text-sm text-gray-500 mt-8">
+                      No students found.
+                    </p>
+                  )}
+                </div>
+
+                {/* 🚀 Students Pagination */}
+                {totalStudentPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100 shrink-0">
+                    <button
+                      type="button"
+                      disabled={currentStudentPage === 1}
+                      onClick={() =>
+                        setCurrentStudentPage((prev) => Math.max(prev - 1, 1))
+                      }
+                      className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+                    <span className="text-sm font-bold text-gray-500 bg-gray-50 px-4 py-1.5 rounded-lg">
+                      Page {currentStudentPage} of {totalStudentPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={currentStudentPage === totalStudentPages}
+                      onClick={() =>
+                        setCurrentStudentPage((prev) =>
+                          Math.min(prev + 1, totalStudentPages),
+                        )
+                      }
+                      className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+                  </div>
                 )}
               </div>
             )}
@@ -382,7 +455,9 @@ export default function SubWingResultsPage() {
                   <span className="text-[10px] font-black uppercase tracking-wider bg-yellow-500 text-yellow-900 px-2 py-1 rounded mb-1 inline-block">
                     Results Declaration
                   </span>
-                  <h2 className="font-bold text-xl">{selectedProgram.title}</h2>
+                  <h2 className="font-bold text-xl capitalize">
+                    {selectedProgram.title}
+                  </h2>
                 </div>
                 <button
                   onClick={resetWizard}
@@ -413,7 +488,7 @@ export default function SubWingResultsPage() {
                           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
                             Student
                           </p>
-                          <p className="font-bold text-gray-900 text-lg">
+                          <p className="font-bold text-gray-900 text-lg capitalize">
                             {winner.student.fullName}
                           </p>
                           <p className="text-xs text-gray-500">
@@ -436,7 +511,7 @@ export default function SubWingResultsPage() {
                                   e.target.value,
                                 )
                               }
-                              className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-yellow-500 text-sm text-black"
+                              className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-yellow-500 text-sm text-black cursor-pointer"
                             >
                               <option value="">None</option>
                               <option value="1st">1st</option>
@@ -458,7 +533,7 @@ export default function SubWingResultsPage() {
                                   e.target.value,
                                 )
                               }
-                              className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-yellow-500 text-sm text-black"
+                              className="w-full p-2 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-yellow-500 text-sm text-black cursor-pointer"
                             >
                               <option value="">None</option>
                               <option value="A+">A+</option>

@@ -1,5 +1,4 @@
 // public/firebase-messaging-sw.js
-
 importScripts(
   "https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js",
 );
@@ -18,11 +17,3 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
-
-// 🚀 Leave this here for logging, but DO NOT call showNotification!
-messaging.onBackgroundMessage((payload) => {
-  console.log(
-    "[firebase-messaging-sw.js] Firebase automatically handled this message: ",
-    payload,
-  );
-});
