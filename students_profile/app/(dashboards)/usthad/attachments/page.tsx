@@ -10,6 +10,8 @@ import {
   AlertTriangle,
   MessageSquare,
   XCircle,
+  ChevronLeft, // 🚀 Imported
+  ChevronRight, // 🚀 Imported
 } from "lucide-react";
 
 export default function VerificationInboxPage() {
@@ -17,13 +19,17 @@ export default function VerificationInboxPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSub, setSelectedSub] = useState<any | null>(null);
 
+  // 🚀 1. Added Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 8;
+
   // State for points when approving achievements
   const [pointsToAward, setPointsToAward] = useState<string>("50");
   const [isProcessing, setIsProcessing] = useState(false);
 
   const getToken = () => localStorage.getItem("token");
 
-  // 1. FETCH ALL SUBMISSIONS
+  // FETCH ALL SUBMISSIONS
   const fetchData = async () => {
     try {
       const response = await fetch(
@@ -44,7 +50,12 @@ export default function VerificationInboxPage() {
     fetchData();
   }, []);
 
-  // 2. FILTERING
+  // 🚀 2. Reset to Page 1 whenever search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // FILTERING
   const pendingSubmissions = submissions.filter(
     (s) => s.status === "PENDING" || s.status === "Pending Verification",
   );
@@ -54,7 +65,14 @@ export default function VerificationInboxPage() {
     return searchString.includes(searchTerm.toLowerCase());
   });
 
-  // 3. ACTION HANDLER (APPROVE / REJECT)
+  // 🚀 3. Calculate Pagination Data
+  const totalPages = Math.ceil(filteredList.length / ITEMS_PER_PAGE) || 1;
+  const paginatedList = filteredList.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
+  // ACTION HANDLER (APPROVE / REJECT)
   const handleAction = async (action: "APPROVED" | "REJECTED") => {
     if (!selectedSub) return;
     setIsProcessing(true);
@@ -86,6 +104,11 @@ export default function VerificationInboxPage() {
       setSubmissions((prev) => prev.filter((s) => s.id !== selectedSub.id));
       setSelectedSub(null);
       setPointsToAward("50"); // reset
+
+      // Safety check: if approving the last item on a page, drop back one page
+      if (paginatedList.length === 1 && currentPage > 1) {
+        setCurrentPage((prev) => prev - 1);
+      }
     } catch (error) {
       alert("Error processing submission.");
     } finally {
@@ -128,13 +151,14 @@ export default function VerificationInboxPage() {
           </div>
         </div>
 
+        {/* 🚀 4. Map over paginatedList instead of filteredList */}
         <div className="flex-1 overflow-y-auto p-2 space-y-2 bg-gray-50">
-          {filteredList.length === 0 ? (
+          {paginatedList.length === 0 ? (
             <p className="text-center text-gray-400 mt-10 p-4">
               Inbox is empty. No pending requests!
             </p>
           ) : (
-            filteredList.map((sub) => {
+            paginatedList.map((sub) => {
               const isPunishment = !!sub.targetPunishment;
               const { title } = getDisplayContent(sub.title);
 
@@ -177,6 +201,31 @@ export default function VerificationInboxPage() {
             })
           )}
         </div>
+
+        {/* 🚀 5. Pagination Footer (Only shows if more than 1 page) */}
+        {totalPages > 1 && (
+          <div className="p-4 border-t border-gray-100 bg-white flex items-center justify-between">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <span className="text-sm font-bold text-gray-500">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            >
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* RIGHT COLUMN: THE REVIEW PANEL */}

@@ -42,11 +42,22 @@ export class NotificationsService {
             title: data.title,
             body: data.message,
           },
-          // Optional: You can send extra data so the phone knows what to open
+          webpush: {
+            notification: {
+              icon: '/icon-192.png', // Ensure this image exists in your frontend public folder
+              badge: '/icon-192.png',
+            },
+            fcmOptions: {
+              // Firebase will automatically open this link when the mobile notification is tapped!
+              link: data.link || '/parent/dashboard',
+            },
+          },
+          // Keep the data block for frontend foreground handling
           data: {
             link: data.link || '/parent/dashboard',
           },
         });
+
         console.log(
           `✅ Push notification sent to mobile for User: ${user.fullName}`,
         );

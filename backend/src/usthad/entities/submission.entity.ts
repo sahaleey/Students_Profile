@@ -45,7 +45,11 @@ export class Submission {
   targetedUsthad!: User | null;
 
   // If this submission is meant to clear a punishment, link it here
-  @ManyToOne(() => Punishment, { nullable: true, eager: true })
+  @ManyToOne(() => Punishment, {
+    nullable: true,
+    eager: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn()
   targetPunishment!: Punishment;
 

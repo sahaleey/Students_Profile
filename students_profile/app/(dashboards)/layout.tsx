@@ -268,7 +268,11 @@ export default function DashboardLayout({
       navItems = [
         { href: "/student", label: "My Portal", icon: LayoutDashboard },
         { href: "/student/tasks", label: "Action Tasks", icon: ClipboardList },
-        { href: "/student/works", label: "Achievements", icon: Star },
+        {
+          href: "/student/works",
+          label: "Achievements and Task Completion",
+          icon: Star,
+        },
         {
           href: "/student/archive",
           label: "Program Results",

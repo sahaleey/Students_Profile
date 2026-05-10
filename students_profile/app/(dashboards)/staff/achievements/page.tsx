@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect, useMemo, Suspense } from "react";
-import { Award, Search, User, CheckCircle2, Filter } from "lucide-react";
+import {
+  Award,
+  Search,
+  User,
+  CheckCircle2,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 
@@ -15,6 +23,10 @@ function AchievementManager() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClass, setSelectedClass] = useState<string>("All");
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+
+  // 🚀 Added Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 8; // Adjust this to show more/less students per page
 
   const [title, setTitle] = useState("");
   const [points, setPoints] = useState("");
@@ -44,6 +56,11 @@ function AchievementManager() {
     ];
   }, [students]);
 
+  // 🚀 Reset to Page 1 whenever a search or filter changes!
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedClass]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -57,7 +74,7 @@ function AchievementManager() {
     setIsSubmitting(true);
 
     try {
-      // 🚀 Format the title to include the department! e.g., "[Library] Read 5 books"
+      // Format the title to include the department! e.g., "[Library] Read 5 books"
       const formattedTitle = `[${department}] ${title}`;
 
       const res = await fetch(
@@ -70,10 +87,10 @@ function AchievementManager() {
           },
           body: JSON.stringify({
             studentId: selectedStudent.id,
-            title: formattedTitle, // Send the newly formatted title
+            title: formattedTitle,
             points: pointsNum,
             isSpecialHighlight,
-            department: department, // Pass it explicitly just in case your backend needs it
+            department: department,
           }),
         },
       );
@@ -103,6 +120,13 @@ function AchievementManager() {
     return matchesSearch && matchesClass;
   });
 
+  // 🚀 Calculate Pagination Data
+  const totalPages = Math.ceil(filteredStudents.length / ITEMS_PER_PAGE) || 1;
+  const paginatedStudents = filteredStudents.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
   // Dynamic styling based on department
   const theme =
     department === "Library"
@@ -110,12 +134,12 @@ function AchievementManager() {
       : department === "Outreach"
         ? "blue"
         : department === "Welfare"
-          ? "rose"
-          : "emerald";
+          ? "red"
+          : "rose";
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fadeInUp">
-      {/* 🚀 Dynamic Header matching the department */}
+      {/* Dynamic Header matching the department */}
       <div
         className={`bg-${theme}-50 p-6 rounded-3xl border border-${theme}-200 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm`}
       >
@@ -179,13 +203,14 @@ function AchievementManager() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto pr-2 space-y-2 max-h-[400px]">
-            {filteredStudents.length === 0 ? (
+          {/* 🚀 Changed to map over paginatedStudents and added min-height */}
+          <div className="flex-1 overflow-y-auto pr-2 space-y-2 min-h-[350px]">
+            {paginatedStudents.length === 0 ? (
               <p className="text-center text-gray-400 py-8 font-medium">
                 No students found matching your criteria.
               </p>
             ) : (
-              filteredStudents.map((student) => (
+              paginatedStudents.map((student) => (
                 <button
                   key={student.id}
                   type="button"
@@ -219,6 +244,35 @@ function AchievementManager() {
               ))
             )}
           </div>
+
+          {/* 🚀 Pagination Controls Footer */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronLeft size={20} />
+              </button>
+
+              <span className="text-sm font-bold text-gray-500 bg-gray-50 px-4 py-1.5 rounded-lg">
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <button
+                type="button"
+                disabled={currentPage === totalPages}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* ACHIEVEMENT FORM CARD */}
@@ -332,7 +386,7 @@ function AchievementManager() {
   );
 }
 
-// 🚀 2. The Main Page exports the Suspense boundary
+// 2. The Main Page exports the Suspense boundary
 export default function RecordAchievementPage() {
   return (
     <Suspense

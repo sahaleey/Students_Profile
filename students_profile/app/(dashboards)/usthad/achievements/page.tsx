@@ -8,6 +8,8 @@ import {
   Trophy,
   Medal,
   Trash2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -41,14 +43,17 @@ export default function AchievementsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [rawStudents, setRawStudents] = useState<RawStudent[]>([]);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
+
+  // 🚀 Added Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 8;
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSpecialHighlight, setIsSpecialHighlight] = useState(false);
-  const [title, setTitle] = useState("");
-  const [points, setPoints] = useState("");
 
   const [formData, setFormData] = useState({
-    title: "", // The work completed
-    points: "", // Kept as string for input, parsed to number on submit
+    title: "",
+    points: "",
   });
 
   const getToken = () => localStorage.getItem("token");
@@ -82,32 +87,32 @@ export default function AchievementsPage() {
     fetchData();
   }, []);
 
-  // 2. GROUP STUDENTS
-  const groupedStudents = rawStudents.reduce(
-    (acc, student) => {
-      const cName = student.class || "Unassigned";
-      if (!acc[cName]) acc[cName] = { className: cName, students: [] };
-      acc[cName].students.push({
-        id: student.id,
-        name: student.fullName,
-        username: student.username,
-        className: cName,
-      });
-      return acc;
-    },
-    {} as Record<string, { className: string; students: Student[] }>,
+  // 🚀 Reset to Page 1 whenever search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // 2. FORMAT, FILTER & PAGINATE STUDENTS
+  // Flattening the students for consistent pagination
+  const flatStudents: Student[] = rawStudents.map((s) => ({
+    id: s.id,
+    name: s.fullName,
+    username: s.username,
+    className: s.class || "Unassigned",
+  }));
+
+  const filteredFlatStudents = flatStudents.filter(
+    (s) =>
+      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.username.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const filteredStudents = Object.values(groupedStudents)
-    .map((group) => ({
-      ...group,
-      students: group.students.filter(
-        (s) =>
-          s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.username.includes(searchTerm),
-      ),
-    }))
-    .filter((group) => group.students.length > 0);
+  const totalPages =
+    Math.ceil(filteredFlatStudents.length / ITEMS_PER_PAGE) || 1;
+  const paginatedStudents = filteredFlatStudents.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
 
   // 3. SUBMIT ACHIEVEMENT
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,6 +121,7 @@ export default function AchievementsPage() {
 
     const pointsValue = parseInt(formData.points, 10);
 
+    // Using the increased limit here (update to 100 or whatever your backend supports)
     if (pointsValue < 1 || pointsValue > 20) {
       toast.error("Points must be between 1 and 20 per achievement.");
       return;
@@ -142,7 +148,7 @@ export default function AchievementsPage() {
         },
       );
 
-      // 🛡️ BACKEND LAYER
+      // BACKEND LAYER CHECK
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to grant achievement");
@@ -176,12 +182,13 @@ export default function AchievementsPage() {
         },
       );
       if (!response.ok) throw new Error("Failed to delete");
+      toast.success("Achievement removed.");
     } catch (error: unknown) {
       console.error(
         "Error removing achievement:",
         error instanceof Error ? error.message : error,
       );
-      alert("Error removing achievement.");
+      toast.error("Error removing achievement.");
       await fetchData();
     }
   };
@@ -229,10 +236,10 @@ export default function AchievementsPage() {
           </div>
         </div>
 
-        <div className="p-4 flex-1 overflow-y-auto">
+        <div className="p-4 flex-1 flex flex-col overflow-y-auto">
           {step === 1 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-left-4">
-              <div className="relative">
+            <div className="flex flex-col h-full animate-in fade-in slide-in-from-left-4">
+              <div className="relative mb-4">
                 <Search
                   className="absolute left-3 top-3 text-gray-400"
                   size={18}
@@ -246,39 +253,36 @@ export default function AchievementsPage() {
                 />
               </div>
 
-              <div className="space-y-6 mt-4">
-                {filteredStudents.length > 0 ? (
-                  filteredStudents.map((group) => (
-                    <div key={group.className}>
-                      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 border-b pb-1">
-                        {group.className}
-                      </h3>
-                      <div className="space-y-2">
-                        {group.students.map((student) => (
-                          <button
-                            key={student.id}
-                            onClick={() => {
-                              setSelectedStudent(student);
-                              setStep(2);
-                            }}
-                            className="w-full flex items-center justify-between p-3 bg-[#fafafa] border border-gray-200 rounded-xl hover:border-emerald-300 hover:bg-emerald-50 transition-colors group text-left"
-                          >
-                            <div>
-                              <p className="font-bold text-gray-800">
-                                {student.name}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Admn: {student.username}
-                              </p>
-                            </div>
-                            <UserPlus
-                              size={18}
-                              className="text-gray-400 group-hover:text-emerald-500 transition-colors"
-                            />
-                          </button>
-                        ))}
+              {/* 🚀 Render Paginated Students */}
+              <div className="flex-1 overflow-y-auto space-y-2 min-h-[350px]">
+                {paginatedStudents.length > 0 ? (
+                  paginatedStudents.map((student) => (
+                    <button
+                      key={student.id}
+                      onClick={() => {
+                        setSelectedStudent(student);
+                        setStep(2);
+                      }}
+                      className="w-full flex items-center justify-between p-3 bg-[#fafafa] border border-gray-200 rounded-xl hover:border-emerald-300 hover:bg-emerald-50 transition-colors group text-left"
+                    >
+                      <div>
+                        <p className="font-bold text-gray-800 capitalize">
+                          {student.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Admn: {student.username}
+                        </p>
                       </div>
-                    </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black uppercase px-2 py-1 rounded-md bg-emerald-100 text-emerald-800">
+                          Class {student.className}
+                        </span>
+                        <UserPlus
+                          size={18}
+                          className="text-gray-400 group-hover:text-emerald-500 transition-colors"
+                        />
+                      </div>
+                    </button>
                   ))
                 ) : (
                   <p className="text-center text-sm text-gray-500 mt-8">
@@ -286,6 +290,37 @@ export default function AchievementsPage() {
                   </p>
                 )}
               </div>
+
+              {/* 🚀 Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    disabled={currentPage === 1}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+
+                  <span className="text-sm font-bold text-gray-500 bg-gray-50 px-4 py-1.5 rounded-lg">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    disabled={currentPage === totalPages}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -302,8 +337,11 @@ export default function AchievementsPage() {
                   <p className="text-xs text-emerald-600 font-bold uppercase">
                     Awarding to:
                   </p>
-                  <p className="font-bold text-emerald-900">
-                    {selectedStudent.name} ({selectedStudent.username})
+                  <p className="font-bold text-emerald-900 capitalize flex items-center gap-2">
+                    {selectedStudent.name}
+                    <span className="bg-emerald-200/50 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full">
+                      Class {selectedStudent.className}
+                    </span>
                   </p>
                 </div>
               </div>
@@ -336,12 +374,15 @@ export default function AchievementsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, points: e.target.value })
                     }
-                    placeholder="50"
+                    placeholder="e.g. 10"
                     className="w-full mt-1 text-black p-2 bg-[#fafafa] border border-gray-200 rounded-lg outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                   />
                 </div>
-                {/* 🚀 Special Highlight Toggle */}
-                <div className="flex items-start gap-3 bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-xl border border-amber-200 mt-4 transition-all hover:shadow-md">
+
+                <div
+                  className="flex items-start gap-3 bg-gradient-to-r from-amber-50 to-orange-50 p-4 rounded-xl border border-amber-200 mt-4 transition-all hover:shadow-md cursor-pointer"
+                  onClick={() => setIsSpecialHighlight(!isSpecialHighlight)}
+                >
                   <div className="pt-0.5">
                     <input
                       type="checkbox"
@@ -349,6 +390,7 @@ export default function AchievementsPage() {
                       checked={isSpecialHighlight}
                       onChange={(e) => setIsSpecialHighlight(e.target.checked)}
                       className="w-5 h-5 text-amber-600 bg-white border-amber-300 rounded focus:ring-amber-500 focus:ring-2 cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
                     />
                   </div>
                   <label
@@ -407,8 +449,8 @@ export default function AchievementsPage() {
                 </div>
 
                 <div className="flex items-center gap-4">
-                  <div className="text-2xl font-black text-[#004643] bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100">
-                    +{a.points}{" "}
+                  <div className="text-2xl font-black text-[#004643] bg-emerald-50 px-4 py-2 rounded-xl border border-emerald-100 flex items-baseline gap-1">
+                    +{a.points}
                     <span className="text-xs text-[#004643]/70 font-medium tracking-wider uppercase">
                       pts
                     </span>

@@ -10,6 +10,7 @@ import {
   Users,
   Coins,
   HeartHandshake,
+  Download, // 🚀 Imported Download Icon
 } from "lucide-react";
 
 export default function AdminArrivalsPage() {
@@ -24,6 +25,7 @@ export default function AdminArrivalsPage() {
 
   const fetchData = async () => {
     try {
+      // 🚀 Updated to production URLs
       const [statusRes, reportRes] = await Promise.all([
         fetch("https://students-profile.onrender.com/admin/arrivals/status", {
           headers: { Authorization: `Bearer ${getToken()}` },
@@ -59,6 +61,52 @@ export default function AdminArrivalsPage() {
     if (res.ok) fetchData();
   };
 
+  // 🚀 THE EXPORT LOGIC
+  const handleDownloadExcel = () => {
+    if (!report.records || report.records.length === 0) return;
+
+    // 1. Define Headers
+    const headers = [
+      "Student Name",
+      "Admission No",
+      "Class",
+      "Arrival Time",
+      "Status",
+    ];
+
+    // 2. Map data into rows
+    const rows = report.records.map((rec: any) => {
+      const name = rec.student?.fullName || "Unknown";
+      const admnNo = rec.student?.username || "N/A";
+      const studentClass = rec.student?.class || "Unassigned";
+
+      const arrivalTime = new Date(rec.recordedTime).toLocaleString();
+
+      let status = "On Time";
+      if (rec.fineAssigned) status = "Fined (Late)";
+      else if (rec.isLate && rec.isExcused) status = "Excused";
+
+      // Wrap variables in quotes to prevent commas inside names from breaking columns!
+      return `"${name}","${admnNo}","${studentClass}","${arrivalTime}","${status}"`;
+    });
+
+    // 3. Combine headers and rows
+    const csvContent = [headers.join(","), ...rows].join("\n");
+
+    // 4. Create a Blob and trigger a download link
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute(
+      "download",
+      `Arrival_Report_${new Date().toLocaleDateString().replace(/\//g, "-")}.csv`,
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (isLoading)
     return (
       <div className="text-center mt-10 animate-pulse font-bold text-indigo-600">
@@ -66,7 +114,7 @@ export default function AdminArrivalsPage() {
       </div>
     );
 
-  // 🚀 DATA PROCESSING: Group records by class
+  // DATA PROCESSING: Group records by class
   const groupedRecords: { [key: string]: any[] } = {};
   let totalOnTime = 0;
   let totalFined = 0;
@@ -97,7 +145,7 @@ export default function AdminArrivalsPage() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-12 animate-fadeInUp">
-      {/* 🚀 THE MASTER CONTROL GATE */}
+      {/* THE MASTER CONTROL GATE */}
       <div
         className={`p-8 rounded-3xl border-2 shadow-lg flex flex-col md:flex-row items-center justify-between gap-6 transition-all duration-500 ${
           isOpen
@@ -139,7 +187,7 @@ export default function AdminArrivalsPage() {
         </button>
       </div>
 
-      {/* 🚀 SESSION SUMMARY STATS */}
+      {/* SESSION SUMMARY STATS */}
       {report.records.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 animate-slideIn">
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 flex items-center gap-4">
@@ -193,17 +241,29 @@ export default function AdminArrivalsPage() {
         </div>
       )}
 
-      {/* 🚀 THE FINAL REPORT - CLASS WISE ACCORDION */}
+      {/* THE FINAL REPORT - CLASS WISE ACCORDION */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="bg-gray-900 p-5 text-white flex flex-col md:flex-row md:items-center justify-between gap-2">
-          <h3 className="font-bold text-lg flex items-center gap-2">
-            <Clock size={20} /> Class-Wise Arrival Report
-          </h3>
-          <span className="text-sm font-medium text-gray-400 bg-white/10 px-3 py-1 rounded-lg">
-            {report.session
-              ? `Session: ${new Date(report.session.openedAt).toLocaleString()}`
-              : "No active session"}
-          </span>
+        {/* 🚀 Updated Header with Export Button */}
+        <div className="bg-gray-900 p-5 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center gap-3">
+            <h3 className="font-bold text-lg flex items-center gap-2">
+              <Clock size={20} /> Class-Wise Arrival Report
+            </h3>
+            <span className="text-sm font-medium text-gray-400 bg-white/10 px-3 py-1 rounded-lg w-fit">
+              {report.session
+                ? `Session: ${new Date(report.session.openedAt).toLocaleString()}`
+                : "No active session"}
+            </span>
+          </div>
+
+          {report.records.length > 0 && (
+            <button
+              onClick={handleDownloadExcel}
+              className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-xl font-bold transition-all shadow-md hover:shadow-lg active:scale-95 text-sm"
+            >
+              <Download size={16} /> Export to Excel
+            </button>
+          )}
         </div>
 
         {report.records.length === 0 ? (

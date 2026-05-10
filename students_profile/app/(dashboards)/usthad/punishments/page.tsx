@@ -11,7 +11,10 @@ import {
   Trash2,
   Coins,
   ShieldAlert,
+  ChevronLeft, // 🚀 Added
+  ChevronRight, // 🚀 Added
 } from "lucide-react";
+import toast from "react-hot-toast"; // Ensure you have this installed from the previous steps!
 
 interface Student {
   id: string;
@@ -45,12 +48,16 @@ export default function PunishmentsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [actionType, setActionType] = useState("PUNISHMENT");
 
-  // 🚀 API States
+  // 🚀 Added Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 8;
+
+  // API States
   const [rawStudents, setRawStudents] = useState<RawStudent[]>([]);
   const [punishments, setPunishments] = useState<Punishment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 🚀 Form State
+  // Form State
   const [formData, setFormData] = useState({
     title: "",
     category: "Public Behavior",
@@ -89,35 +96,33 @@ export default function PunishmentsPage() {
     fetchData();
   }, []);
 
-  // 2. DYNAMICALLY GROUP STUDENTS BY CLASS
-  const groupedStudents = rawStudents.reduce(
-    (acc, student) => {
-      const cName = student.class || "Unassigned";
-      if (!acc[cName]) acc[cName] = { className: cName, students: [] };
-      acc[cName].students.push({
-        id: student.id,
-        name: student.fullName,
-        username: student.username,
-        className: cName,
-      });
-      return acc;
-    },
-    {} as Record<string, { className: string; students: Student[] }>,
+  // 🚀 Reset to Page 1 whenever search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // 2. FORMAT, FILTER & PAGINATE STUDENTS
+  const flatStudents: Student[] = rawStudents.map((s) => ({
+    id: s.id,
+    name: s.fullName,
+    username: s.username,
+    className: s.class || "Unassigned",
+  }));
+
+  const filteredFlatStudents = flatStudents.filter(
+    (s) =>
+      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.username.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  // 3. FILTER STUDENTS BASED ON SEARCH
-  const filteredStudents = Object.values(groupedStudents)
-    .map((group) => ({
-      ...group,
-      students: group.students.filter(
-        (s) =>
-          s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          s.username.includes(searchTerm),
-      ),
-    }))
-    .filter((group) => group.students.length > 0);
+  const totalPages =
+    Math.ceil(filteredFlatStudents.length / ITEMS_PER_PAGE) || 1;
+  const paginatedStudents = filteredFlatStudents.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
 
-  // 4. SUBMIT PUNISHMENT TO BACKEND
+  // 3. SUBMIT PUNISHMENT TO BACKEND
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudent) return;
@@ -146,18 +151,18 @@ export default function PunishmentsPage() {
       setFormData({ title: "", category: "Public Behavior", description: "" });
       resetWizard();
       await fetchData(); // Refresh the right column!
+      toast.success("Action applied successfully!");
     } catch (error) {
-      alert("Error assigning punishment. Please try again.");
+      toast.error("Error assigning action. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleRemovePunishment = async (punishmentId: string) => {
-    // Prevent accidental clicks
     if (
       !window.confirm(
-        "Are you sure you want to delete this punishment record? This cannot be undone.",
+        "Are you sure you want to delete this record? This cannot be undone.",
       )
     ) {
       return;
@@ -178,8 +183,9 @@ export default function PunishmentsPage() {
       );
 
       if (!response.ok) throw new Error("Failed to delete");
+      toast.success("Record deleted.");
     } catch (error) {
-      alert("Error removing punishment. Refreshing list.");
+      toast.error("Error removing record. Refreshing list.");
       await fetchData(); // Put it back on the screen if the server failed
     }
   };
@@ -234,11 +240,11 @@ export default function PunishmentsPage() {
         </div>
 
         {/* Dynamic Content Area */}
-        <div className="p-4 flex-1 overflow-y-auto">
+        <div className="p-4 flex-1 flex flex-col overflow-y-auto">
           {/* STEP 1: CLASS-WISE STUDENT LIST */}
           {step === 1 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-left-4">
-              <div className="relative">
+            <div className="flex flex-col h-full animate-in fade-in slide-in-from-left-4">
+              <div className="relative mb-4">
                 <Search
                   className="absolute left-3 top-3 text-gray-400"
                   size={18}
@@ -252,36 +258,33 @@ export default function PunishmentsPage() {
                 />
               </div>
 
-              <div className="space-y-6 mt-4">
-                {filteredStudents.length > 0 ? (
-                  filteredStudents.map((group) => (
-                    <div key={group.className}>
-                      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 border-b pb-1">
-                        Class: {group.className}
-                      </h3>
-                      <div className="space-y-2">
-                        {group.students.map((student) => (
-                          <button
-                            key={student.id}
-                            onClick={() => handleSelectStudent(student)}
-                            className="w-full flex items-center justify-between p-3 bg-[#fafafa] border border-gray-200 rounded-xl hover:border-red-300 hover:bg-red-50 transition-colors group text-left"
-                          >
-                            <div>
-                              <p className="font-bold text-gray-800">
-                                {student.name}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                Ad No: {student.username}
-                              </p>
-                            </div>
-                            <UserPlus
-                              size={18}
-                              className="text-gray-400 group-hover:text-red-500 transition-colors"
-                            />
-                          </button>
-                        ))}
+              {/* 🚀 Render Paginated Students */}
+              <div className="flex-1 overflow-y-auto space-y-2 min-h-[350px]">
+                {paginatedStudents.length > 0 ? (
+                  paginatedStudents.map((student) => (
+                    <button
+                      key={student.id}
+                      onClick={() => handleSelectStudent(student)}
+                      className="w-full flex items-center justify-between p-3 bg-[#fafafa] border border-gray-200 rounded-xl hover:border-red-300 hover:bg-red-50 transition-colors group text-left"
+                    >
+                      <div>
+                        <p className="font-bold text-gray-800 capitalize">
+                          {student.name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Ad No: {student.username}
+                        </p>
                       </div>
-                    </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black uppercase px-2 py-1 rounded-md bg-red-100 text-red-800">
+                          Class {student.className}
+                        </span>
+                        <UserPlus
+                          size={18}
+                          className="text-gray-400 group-hover:text-red-500 transition-colors"
+                        />
+                      </div>
+                    </button>
                   ))
                 ) : (
                   <p className="text-center text-sm text-gray-500 mt-8">
@@ -289,6 +292,37 @@ export default function PunishmentsPage() {
                   </p>
                 )}
               </div>
+
+              {/* 🚀 Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+                  <button
+                    type="button"
+                    disabled={currentPage === 1}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+
+                  <span className="text-sm font-bold text-gray-500 bg-gray-50 px-4 py-1.5 rounded-lg">
+                    Page {currentPage} of {totalPages}
+                  </span>
+
+                  <button
+                    type="button"
+                    disabled={currentPage === totalPages}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    className="p-2 rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -307,8 +341,11 @@ export default function PunishmentsPage() {
                   <p className="text-xs text-red-600 font-bold uppercase">
                     Assigning to:
                   </p>
-                  <p className="font-bold text-red-900">
-                    {selectedStudent.name} ({selectedStudent.username})
+                  <p className="font-bold text-red-900 capitalize flex items-center gap-2">
+                    {selectedStudent.name}
+                    <span className="bg-red-200/50 text-red-800 text-[10px] px-2 py-0.5 rounded-full">
+                      Class {selectedStudent.className}
+                    </span>
                   </p>
                 </div>
               </div>
@@ -450,7 +487,7 @@ export default function PunishmentsPage() {
                     {p.status || "ACTIVE"}
                   </span>
 
-                  {/* Delete Button (Only shows up when you hover over the card!) */}
+                  {/* Delete Button */}
                   <button
                     onClick={() => handleRemovePunishment(p.id)}
                     className="p-2 text-black hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"

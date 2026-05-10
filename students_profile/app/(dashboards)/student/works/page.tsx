@@ -12,7 +12,10 @@ import {
   Sparkles,
   Calendar,
   AlertCircle,
+  ChevronLeft, // 🚀 Added
+  ChevronRight, // 🚀 Added
 } from "lucide-react";
+import toast from "react-hot-toast"; // 🚀 Added for premium notifications
 
 export default function StudentWorksPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,6 +27,10 @@ export default function StudentWorksPage() {
     totalPoints: 0,
     approvedWorks: 0,
   });
+
+  // 🚀 Added Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5; // Kept at 5 since these cards are quite large
 
   const [formData, setFormData] = useState({
     title: "",
@@ -37,6 +44,7 @@ export default function StudentWorksPage() {
   const fetchMyWorks = async () => {
     try {
       const token = getToken();
+      // 🚀 Updated to production URL
       const res = await fetch(
         "https://students-profile.onrender.com/student/submissions",
         {
@@ -98,11 +106,20 @@ export default function StudentWorksPage() {
     fetchUsthads();
   }, []);
 
+  // 🚀 Calculate Pagination Data
+  const totalPages = Math.ceil(myWorks.length / ITEMS_PER_PAGE) || 1;
+  const paginatedWorks = myWorks.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
   // 2. SUBMIT NEW WORK
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.content || !formData.targetedUsthadId)
       return;
+
+    const toastId = toast.loading("Submitting your work...");
     setIsSubmitting(true);
 
     try {
@@ -127,8 +144,13 @@ export default function StudentWorksPage() {
         targetedUsthadId: prev.targetedUsthadId,
       }));
       await fetchMyWorks();
+
+      // Auto-jump to page 1 to see the new submission
+      setCurrentPage(1);
+
+      toast.success("Work submitted successfully!", { id: toastId });
     } catch (error) {
-      alert("Failed to submit work. Try again.");
+      toast.error("Failed to submit work. Try again.", { id: toastId });
     } finally {
       setIsSubmitting(false);
     }
@@ -187,13 +209,13 @@ export default function StudentWorksPage() {
             </span>
           </div>
 
-          <div className="space-y-4">
-            {myWorks.length === 0 ? (
+          <div className="space-y-4 min-h-[400px]">
+            {paginatedWorks.length === 0 ? (
               <div className="text-center p-8 text-gray-500 bg-white/50 backdrop-blur-md rounded-2xl border border-white/50">
                 You haven't submitted any work yet!
               </div>
             ) : (
-              myWorks.map((work, index) => {
+              paginatedWorks.map((work, index) => {
                 // We split the title string we formatted in the backend
                 const titleParts = work.title.split(" | Content: ");
                 const displayTitle = titleParts[0];
@@ -254,6 +276,35 @@ export default function StudentWorksPage() {
               })
             )}
           </div>
+
+          {/* 🚀 Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200/30">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                className="p-2 rounded-xl bg-white/60 backdrop-blur-md hover:bg-white text-[#004643] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+              >
+                <ChevronLeft size={20} />
+              </button>
+
+              <span className="text-sm font-bold text-[#004643]/80 bg-white/50 backdrop-blur-md px-4 py-2 rounded-xl shadow-sm border border-white/50">
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <button
+                type="button"
+                disabled={currentPage === totalPages}
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                className="p-2 rounded-xl bg-white/60 backdrop-blur-md hover:bg-white text-[#004643] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+              >
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* RIGHT: TEXT-BASED ACHIEVEMENT SUBMIT FORM */}
@@ -286,7 +337,7 @@ export default function StudentWorksPage() {
                       targetedUsthadId: e.target.value,
                     })
                   }
-                  className="w-full p-3 bg-white/80 backdrop-blur-sm border text-black border-gray-200 rounded-xl outline-none focus:border-[#004643] focus:ring-2 focus:ring-[#004643]/20 transition-all"
+                  className="w-full p-3 bg-white/80 backdrop-blur-sm border text-black border-gray-200 rounded-xl outline-none focus:border-[#004643] focus:ring-2 focus:ring-[#004643]/20 transition-all cursor-pointer"
                 >
                   {usthads.length === 0 ? (
                     <option value="">No Usthads available</option>
