@@ -23,4 +23,13 @@ messaging.onBackgroundMessage((payload) => {
     "[firebase-messaging-sw.js] Firebase automatically handled this message: ",
     payload,
   );
+
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: "/icon.png",
+    badge: "/icon.png",
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
 });
