@@ -49,12 +49,13 @@ export class NotificationsService {
             },
             fcmOptions: {
               // Firebase will automatically open this link when the mobile notification is tapped!
-              link: data.link || '/parent/dashboard',
+              link:
+                data.link || 'https://nahj-studentsprofile.vercel.app/parent',
             },
           },
           // Keep the data block for frontend foreground handling
           data: {
-            link: data.link || '/parent/dashboard',
+            link: data.link || 'https://nahj-studentsprofile.vercel.app/parent',
           },
         });
 
