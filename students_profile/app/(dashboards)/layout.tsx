@@ -257,7 +257,7 @@ export default function DashboardLayout({
         { href: "/usthad/attachments", label: "Attachments", icon: FileCheck },
         {
           href: "/usthad/punishments",
-          label: "Behavioral Credits",
+          label: "Corrective Path",
           icon: AlertOctagon,
         },
         { href: "/usthad/students", label: "Students Status", icon: Info },
@@ -389,7 +389,7 @@ export default function DashboardLayout({
               )}
             </div>
             <div>
-              <h1 className="text-xl font-bold">Campus Portal</h1>
+              <h1 className="text-xl font-bold">Nahj Portal</h1>
               <p className="text-xs text-white/60 capitalize">
                 {!isLoaded ? "Loading..." : userRole}
               </p>

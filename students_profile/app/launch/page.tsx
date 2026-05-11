@@ -29,7 +29,7 @@ export default function LaunchPage() {
   const [showLaunchButton, setShowLaunchButton] = useState(false);
 
   // Set your exact launch date here! (Monday, May 11, 2026, 8:00 PM)
-  const TARGET_DATE = new Date("2026-05-11T20:00:00").getTime();
+  const TARGET_DATE = new Date("2026-05-11T13:30:00").getTime();
 
   useEffect(() => {
     setMounted(true);

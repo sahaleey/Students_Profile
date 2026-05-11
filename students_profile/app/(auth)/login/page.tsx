@@ -139,7 +139,7 @@ export default function LoginPage() {
               />
             </div>
             <h1 className="text-3xl font-bold text-white tracking-tight">
-              Campus Portal
+              Nahj Portal
             </h1>
             <p className="text-white/80 mt-2 text-sm font-light">
               Welcome back! Please sign in
@@ -214,7 +214,7 @@ export default function LoginPage() {
 
         {/* Footer Note */}
         <p className="text-center text-white/60 text-xs mt-6 font-light">
-          Secure campus portal • All data is encrypted
+          Secure Nahj Portal • All data is encrypted
         </p>
       </div>
 

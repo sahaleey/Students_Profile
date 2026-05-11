@@ -108,7 +108,7 @@ export default function AdminCentre() {
               Admin Centre
             </h1>
             <p className="text-gray-500 mt-1 font-medium flex items-center gap-2">
-              Register new members to the campus portal
+              Register new members to the Nahj Portal
             </p>
           </div>
         </div>

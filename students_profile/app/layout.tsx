@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nahjurrashad Campus Portal",
+  title: "Nahjurrashad Students Portal",
   description:
     "A comprehensive platform for students to manage their profiles, view programs, and access resources.",
   manifest: "/manifest.json",

@@ -176,7 +176,7 @@ export default function UsthadDashboard() {
           </div>
           <div>
             <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">
-              Total Behavioral credits
+              Total Corrective Path
             </p>
             <p className="text-2xl font-black text-gray-800">
               {stats.punishmentsCount}
@@ -231,7 +231,7 @@ export default function UsthadDashboard() {
             <AlertTriangle className="text-red-500 group-hover:scale-110 transition-transform" />
           </div>
           <h3 className="font-bold text-base sm:text-lg text-gray-800">
-            Assign Behavioral credits
+            Assign Corrective Path
           </h3>
           <p className="text-sm text-gray-500 mt-1">
             Report student issues and manage discipline.
