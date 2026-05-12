@@ -8,6 +8,7 @@ import { Achievement } from '../usthad/entities/achievement.entity';
 import { Punishment } from '../usthad/entities/punishment.entity';
 import { ArrivalSession } from './entities/arrival-session.entity';
 import { Arrival } from 'src/usthad/entities/arrival.entity';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { Arrival } from 'src/usthad/entities/arrival.entity';
       ArrivalSession,
       Arrival,
     ]),
+    NotificationsModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

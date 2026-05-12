@@ -116,4 +116,13 @@ export class AdminController {
   getArrivalReport() {
     return this.adminService.getLatestArrivalReport();
   }
+
+  @Roles(Role.ADMIN)
+  @Patch('users/:id/reset-password')
+  async resetUserPassword(
+    @Param('id') userId: string,
+    @Body('newPassword') newPassword: string,
+  ) {
+    return this.adminService.resetUserPassword(userId, newPassword);
+  }
 }

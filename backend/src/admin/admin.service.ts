@@ -16,6 +16,7 @@ import {
 import { Role } from 'src/users/enums/role.enum';
 import { ArrivalSession } from './entities/arrival-session.entity';
 import { Arrival } from '../usthad/entities/arrival.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class AdminService {
@@ -30,6 +31,7 @@ export class AdminService {
     @InjectRepository(ArrivalSession)
     private sessionRepo: Repository<ArrivalSession>,
     @InjectRepository(Arrival) private arrivalRepo: Repository<Arrival>,
+    private notifService: NotificationsService,
   ) {}
 
   // 1. Get all users
@@ -286,11 +288,11 @@ export class AdminService {
   async getAllParents() {
     return this.usersRepository.find({
       where: { role: Role.PARENT },
-      relations: ['children'], // 🚀 Make sure to load the linked children!
+      relations: ['children'],
       order: { fullName: 'ASC' },
     });
   }
-  // Inside admin.service.ts
+
   async getArrivalGateStatus() {
     const activeSession = await this.sessionRepo.findOne({
       where: { isOpen: true },
@@ -312,7 +314,6 @@ export class AdminService {
       arrivedStudentIds, // 🚀 Send this array to the frontend
     };
   }
-
   async toggleArrivalGate(isOpen: boolean) {
     if (isOpen) {
       // Open a new session
@@ -323,7 +324,40 @@ export class AdminService {
       const activeSession = await this.sessionRepo.findOne({
         where: { isOpen: true },
       });
+
       if (activeSession) {
+        // 🚀 1. Fetch all arrivals for this session
+        const arrivals = await this.arrivalRepo.find({
+          where: { sessionId: activeSession.id },
+          relations: ['student'],
+        });
+        const arrivedStudentIds = arrivals.map((a) => a.student.id);
+
+        // 🚀 2. Fetch all active students WITH their parent linked
+        const allStudents = await this.usersRepository.find({
+          where: { role: Role.STUDENT, isActive: true },
+          relations: ['parent'], // We need the parent object to send the notification!
+        });
+
+        // 🚀 3. Find the missing students
+        const missingStudents = allStudents.filter(
+          (student) => !arrivedStudentIds.includes(student.id),
+        );
+
+        // 🚀 4. Send the Missing Alert to the Parents!
+        for (const student of missingStudents) {
+          if (student.parent) {
+            await this.notifService.sendNotification({
+              recipientId: student.parent.id, // Target the specific parent
+              title: '🚨 Urgent: Campus Arrival Alert',
+              message: `The campus arrival gate has officially closed, and your child ${student.fullName} has NOT been marked as arrived. Please contact the administration immediately if this is unexpected.`,
+              type: 'ERROR',
+              link: 'https://nahj-studentsprofile.vercel.app/parent',
+            });
+          }
+        }
+
+        // 5. Finally, close the session
         activeSession.isOpen = false;
         activeSession.closedAt = new Date();
         return this.sessionRepo.save(activeSession);
@@ -331,23 +365,60 @@ export class AdminService {
     }
   }
 
-  // 🚀 FETCH THE REPORT
   async getLatestArrivalReport() {
-    // Get the most recently opened session (open or closed)
     const latestSession = await this.sessionRepo.findOne({
       where: {},
       order: { openedAt: 'DESC' },
     });
 
-    if (!latestSession) return { session: null, records: [] };
+    if (!latestSession)
+      return { session: null, records: [], missingStudents: [] };
 
-    // Fetch all arrivals recorded during this session
     const records = await this.arrivalRepo.find({
       where: { sessionId: latestSession.id },
       relations: ['student'],
       order: { recordedTime: 'DESC' },
     });
 
-    return { session: latestSession, records };
+    // 1. Get the IDs of everyone who arrived
+    const arrivedStudentIds = records.map((r) => r.student.id);
+
+    // 2. Fetch all active students from the database
+    const allStudents = await this.usersRepository.find({
+      where: { role: Role.STUDENT, isActive: true },
+      select: ['id', 'fullName', 'username', 'class'],
+    });
+
+    // 3. Filter out the ones who already arrived
+    const missingStudents = allStudents.filter(
+      (student) => !arrivedStudentIds.includes(student.id),
+    );
+
+    // 4. Return everything to the frontend
+    return {
+      session: latestSession,
+      records,
+      missingStudents,
+    };
+  }
+
+  // 4. Reset User Password
+  async resetUserPassword(userId: string, newPassword: string) {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Hash the new password just like we do during registration
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.passwordHash = hashedPassword;
+
+    await this.usersRepository.save(user);
+
+    return {
+      message: 'Password reset successfully',
+      username: user.username,
+    };
   }
 }

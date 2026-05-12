@@ -249,6 +249,7 @@ export default function DashboardLayout({
         },
         { href: "/admin/parents", label: "Link Parents", icon: Users },
         { href: "/admin/arrivals", label: "Arrival Control", icon: Clock },
+        { href: "/admin/reset-password", label: "Reset Passwords", icon: Key },
       ];
     } else if (userRole === "usthad") {
       navItems = [
