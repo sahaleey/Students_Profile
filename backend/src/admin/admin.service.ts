@@ -404,21 +404,22 @@ export class AdminService {
 
   // 4. Reset User Password
   async resetUserPassword(userId: string, newPassword: string) {
-    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+    });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new Error('User not found');
     }
 
-    // Hash the new password just like we do during registration
     const hashedPassword = await bcrypt.hash(newPassword, 10);
+
     user.passwordHash = hashedPassword;
 
     await this.usersRepository.save(user);
 
     return {
       message: 'Password reset successfully',
-      username: user.username,
     };
   }
 }
