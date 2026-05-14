@@ -247,6 +247,11 @@ export default function DashboardLayout({
           label: "System Reports",
           icon: ClipboardList,
         },
+        {
+          href: "/admin/student-records",
+          label: "Student Records",
+          icon: FileText,
+        },
         { href: "/admin/parents", label: "Link Parents", icon: Users },
         { href: "/admin/arrivals", label: "Arrival Control", icon: Clock },
         { href: "/admin/reset-password", label: "Reset Passwords", icon: Key },

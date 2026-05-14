@@ -125,4 +125,10 @@ export class AdminController {
   ) {
     return this.adminService.resetUserPassword(userId, newPassword);
   }
+
+  @Get('students/:id/full-record')
+  @Roles(Role.ADMIN)
+  getStudentFullRecord(@Param('id') id: string) {
+    return this.adminService.getStudentFullRecord(id);
+  }
 }

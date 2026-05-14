@@ -422,4 +422,73 @@ export class AdminService {
       message: 'Password reset successfully',
     };
   }
+
+  // ==========================================
+  // 🚀 ADMIN: GET STUDENT FULL RECORD
+  // ==========================================
+  async getStudentFullRecord(studentId: string) {
+    const student = await this.usersRepository.findOne({
+      where: { id: studentId, role: Role.STUDENT },
+      select: ['id', 'fullName', 'username', 'class', 'isActive'],
+    });
+
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+
+    // 🚀 We use relations: ['awardedBy'] to get the Usthad's details!
+    const achievements = await this.achievementRepo.find({
+      where: { student: { id: studentId } },
+      relations: ['awardedBy'],
+      order: { createdAt: 'DESC' },
+    });
+
+    // 🚀 We use relations: ['assignedBy'] to get the Usthad's details!
+    const punishments = await this.punishmentRepo.find({
+      where: { student: { id: studentId } },
+      relations: ['assignedBy'],
+      order: { createdAt: 'DESC' },
+    });
+
+    const activeMonth = await this.monthRepo.findOne({
+      where: { isActive: true },
+    });
+    const activeMonthName = activeMonth ? activeMonth.name : 'Default Term';
+
+    // Grouping the data for the frontend Overview Tab
+    const currentMonthAchievements = achievements.filter(
+      (a) => a.academicMonth === activeMonthName,
+    );
+    const currentMonthPoints = currentMonthAchievements.reduce(
+      (sum, a) => sum + a.points,
+      0,
+    );
+    const totalLifetimePoints = achievements.reduce(
+      (sum, a) => sum + a.points,
+      0,
+    );
+
+    const activePunishments = punishments.filter(
+      (p) => p.status === PunishmentStatus.ACTIVE,
+    );
+    const resolvedPunishments = punishments.filter(
+      (p) => p.status === PunishmentStatus.RESOLVED,
+    );
+
+    return {
+      student,
+      overview: {
+        activeMonthName,
+        currentMonthPoints,
+        totalLifetimePoints,
+        currentMonthAchievements,
+        activePunishments,
+        resolvedPunishments,
+      },
+      history: {
+        allAchievements: achievements,
+        allPunishments: punishments,
+      },
+    };
+  }
 }
