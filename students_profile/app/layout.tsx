@@ -14,6 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://nahj-studentsprofile.vercel.app"),
+
   title: {
     template: "%s | Nahjurrashad Students Portal",
     default: "Nahjurrashad Students Portal",
@@ -33,6 +35,19 @@ export const metadata: Metadata = {
     "nahjurrashad students profile",
   ],
   manifest: "/manifest.json",
+
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" }, // Perfect size for iOS Home Screen
+    ],
+  },
+
   openGraph: {
     title: "Nahjurrashad Students Portal",
     description:
