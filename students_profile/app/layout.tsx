@@ -14,10 +14,42 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nahjurrashad Students Portal",
+  title: {
+    template: "%s | Nahjurrashad Students Portal",
+    default: "Nahjurrashad Students Portal",
+  },
   description:
     "A comprehensive platform for students to manage their profiles, view programs, and access resources.",
+  keywords: [
+    "Nahjurrashad",
+    "Campus Portal",
+    "Student Management",
+    "nric",
+    "student profiles",
+    "nahjurrashad chamakkala",
+    "portal",
+    "nahjurrashad students portal",
+    "nahj",
+    "nahjurrashad students profile",
+  ],
   manifest: "/manifest.json",
+  openGraph: {
+    title: "Nahjurrashad Students Portal",
+    description:
+      "Manage student profiles, view programs, and access campus resources efficiently.",
+    url: "https://nahj-studentsprofile.vercel.app",
+    siteName: "Nahjurrashad Portal",
+    images: [
+      {
+        url: "/campus-bg.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Nahjurrashad Campus Portal Preview",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
 };
 
 export const viewport: Viewport = {
