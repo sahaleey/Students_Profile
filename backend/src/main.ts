@@ -1,10 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as admin from 'firebase-admin';
+import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
+  app.use(helmet());
   app.enableCors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:3000', // Allow frontend origin or default to localhost
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',

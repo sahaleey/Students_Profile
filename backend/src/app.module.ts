@@ -13,9 +13,23 @@ import { SubwingModule } from './subwing/subwing.module';
 import { ConfigService } from '@nestjs/config';
 import { ParentModule } from './parent/parent.module';
 import { StaffModule } from './staff/staff.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import type { Provider } from '@nestjs/common';
+
+const throttlerGuardProvider: Provider = {
+  provide: APP_GUARD,
+  useClass: ThrottlerGuard,
+};
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10,
+      },
+    ]),
     ConfigModule.forRoot({
       isGlobal: true,
     }), // Reads the .env file
@@ -44,6 +58,6 @@ import { StaffModule } from './staff/staff.module';
     StaffModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [throttlerGuardProvider, AppService],
 })
 export class AppModule {}

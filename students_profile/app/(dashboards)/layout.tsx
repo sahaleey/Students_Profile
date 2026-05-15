@@ -487,7 +487,7 @@ export default function DashboardLayout({
         </header>
 
         {/* 🌟 THE GLOBAL SPOTLIGHT BANNER 🌟 */}
-        {/* We check if it exists, AND we ensure the user is NOT an admin */}
+
         {specialHighlight && userRole !== "admin" && (
           <div className="mx-4 md:mx-8 mt-6 mb-2 relative group">
             {/* Animated gradient border */}

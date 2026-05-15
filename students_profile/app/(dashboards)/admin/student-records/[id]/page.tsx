@@ -22,14 +22,12 @@ export default function StudentFullRecordPage() {
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 🚀 TAB SYSTEM: Toggle between Current Month and Full History
   const [activeTab, setActiveTab] = useState<"OVERVIEW" | "HISTORY">(
     "OVERVIEW",
   );
 
-  // 🚀 HISTORY PAGINATION STATES
   const [currentHistoryPage, setCurrentHistoryPage] = useState(1);
-  const HISTORY_ITEMS_PER_PAGE = 5; // Show 5 timeline events per page for a cool, uncrowded look
+  const HISTORY_ITEMS_PER_PAGE = 5;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,7 +50,6 @@ export default function StudentFullRecordPage() {
     fetchData();
   }, [id]);
 
-  // 🚀 PRE-PROCESS HISTORY DATA (Outside of the render block to keep it fast)
   const fullHistory = data
     ? [
         ...data.history.allAchievements.map((a: any) => ({
@@ -76,7 +73,6 @@ export default function StudentFullRecordPage() {
     currentHistoryPage * HISTORY_ITEMS_PER_PAGE,
   );
 
-  // Handle Tab Switching (Reset page to 1 when entering History tab)
   const handleTabSwitch = (tab: "OVERVIEW" | "HISTORY") => {
     setActiveTab(tab);
     if (tab === "HISTORY") setCurrentHistoryPage(1);
@@ -145,7 +141,7 @@ export default function StudentFullRecordPage() {
         </div>
       </div>
 
-      {/* 🚀 TAB NAVIGATION */}
+      {/*  TAB NAVIGATION */}
       <div className="flex items-center gap-2 p-1.5 bg-gray-100 rounded-2xl w-fit">
         <button
           onClick={() => handleTabSwitch("OVERVIEW")}
@@ -169,7 +165,7 @@ export default function StudentFullRecordPage() {
         </button>
       </div>
 
-      {/* 🚀 TAB CONTENT: OVERVIEW */}
+      {/*  TAB CONTENT: OVERVIEW */}
       {activeTab === "OVERVIEW" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-slideIn">
           {/* Active Month Points */}
@@ -291,7 +287,7 @@ export default function StudentFullRecordPage() {
         </div>
       )}
 
-      {/* 🚀 TAB CONTENT: FULL HISTORY */}
+      {/*  TAB CONTENT: FULL HISTORY */}
       {activeTab === "HISTORY" && (
         <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm animate-slideIn">
           <div className="mb-8">
@@ -371,7 +367,7 @@ export default function StudentFullRecordPage() {
             </div>
           )}
 
-          {/* 🚀 HISTORY PAGINATION CONTROLS */}
+          {/*  HISTORY PAGINATION CONTROLS */}
           {totalHistoryPages > 1 && (
             <div className="flex items-center justify-between pt-8 mt-4 border-t border-gray-100">
               <button
