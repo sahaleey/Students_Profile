@@ -33,6 +33,12 @@ export const metadata: Metadata = {
     "nahjurrashad students portal",
     "nahj",
     "nahjurrashad students profile",
+    "nahjurrashad student portal",
+    "nahj portal",
+    "nahjurrashad portal",
+    "nahj student portal",
+    "nahjurrashad student profiles",
+    "nahj students portal",
   ],
   manifest: "/manifest.json",
 

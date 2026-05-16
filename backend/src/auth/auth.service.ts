@@ -60,7 +60,7 @@ export class AuthService {
 
   async login(user: AuthenticatedUser, ipAddress: string, userAgent: string) {
     const newSession = await this.sessionRepository.save({
-      userId: String(user.id),
+      user: { id: String(user.id) },
       ipAddress: ipAddress || 'Unknown IP',
       deviceInfo: userAgent || 'Unknown Device',
       isActive: true,
@@ -141,7 +141,7 @@ export class AuthService {
     return this.sessionRepository.find({
       where: { user: { id: String(userId) }, isActive: true },
       order: { lastLoginAt: 'DESC' }, // Show newest logins first
-      select: ['id', 'deviceInfo', 'ipAddress', 'lastLoginAt'], // Don't send user details back again
+      select: ['id', 'deviceInfo', 'ipAddress', 'lastLoginAt'],
     });
   }
 
@@ -150,7 +150,7 @@ export class AuthService {
     await this.sessionRepository.update(
       {
         user: { id: String(userId) },
-        id: Not(String(currentSessionId)),
+        id: Not(currentSessionId),
       },
       { isActive: false },
     );

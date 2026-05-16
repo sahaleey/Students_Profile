@@ -16,6 +16,8 @@ import {
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { Roles } from './decorators/roles.decorator';
+import { Role } from 'src/users/enums/role.enum';
 
 interface JwtUser {
   userId: string | number;
@@ -84,6 +86,7 @@ export class AuthController {
 
   @Get('sessions')
   @UseGuards(JwtAuthGuard)
+  @Roles(Role.ADMIN)
   async getActiveSessions(@Req() req: JwtRequest) {
     // 🚀 Calling the service instead of doing DB logic here
     return this.authService.getActiveSessions(req.user.userId);
@@ -91,6 +94,7 @@ export class AuthController {
 
   @Delete('sessions/revoke-others')
   @UseGuards(JwtAuthGuard)
+  @Roles(Role.ADMIN)
   async revokeOtherDevices(@Req() req: JwtRequest) {
     // 🚀 Calling the service. We pass both the userId and the current sessionId!
     return this.authService.revokeOtherSessions(
