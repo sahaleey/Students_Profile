@@ -7,6 +7,9 @@ import {
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { Session } from './entities/session.entity';
+import { Repository, Not } from 'typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
 interface AuthenticatedUser {
   id: number | string;
@@ -21,6 +24,7 @@ interface JwtPayload {
   username: string;
   sub: number | string;
   role: string;
+  sessionId?: string;
 }
 
 @Injectable()
@@ -28,6 +32,8 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    @InjectRepository(Session)
+    private sessionRepository: Repository<Session>,
   ) {}
 
   async validateUser(username: string, pass: string): Promise<any> {
@@ -52,11 +58,19 @@ export class AuthService {
     return result;
   }
 
-  login(user: AuthenticatedUser) {
+  async login(user: AuthenticatedUser, ipAddress: string, userAgent: string) {
+    const newSession = await this.sessionRepository.save({
+      userId: String(user.id),
+      ipAddress: ipAddress || 'Unknown IP',
+      deviceInfo: userAgent || 'Unknown Device',
+      isActive: true,
+    });
+
     const payload: JwtPayload = {
       username: user.username,
       sub: user.id,
       role: user.role,
+      sessionId: newSession.id,
     };
 
     return {
@@ -121,5 +135,26 @@ export class AuthService {
     await this.usersService.updatePasswordHash(userId, newPasswordHash);
 
     return { message: 'Password changed successfully' };
+  }
+
+  async getActiveSessions(userId: string | number) {
+    return this.sessionRepository.find({
+      where: { user: { id: String(userId) }, isActive: true },
+      order: { lastLoginAt: 'DESC' }, // Show newest logins first
+      select: ['id', 'deviceInfo', 'ipAddress', 'lastLoginAt'], // Don't send user details back again
+    });
+  }
+
+  // NEW: Kill all devices EXCEPT the current one
+  async revokeOtherSessions(userId: string | number, currentSessionId: string) {
+    await this.sessionRepository.update(
+      {
+        user: { id: String(userId) },
+        id: Not(String(currentSessionId)),
+      },
+      { isActive: false },
+    );
+
+    return { message: 'All other devices have been securely logged out.' };
   }
 }
