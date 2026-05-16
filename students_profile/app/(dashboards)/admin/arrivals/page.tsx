@@ -16,6 +16,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+import { saveAs } from "file-saver";
+import * as XLSX from "xlsx-js-style";
+
 export default function AdminArrivalsPage() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -72,84 +75,347 @@ export default function AdminArrivalsPage() {
     if (res.ok) fetchData();
   };
 
-  // 🚀 THE UPGRADED EXCEL/CSV EXPORT LOGIC
   const handleDownloadExcel = () => {
-    // If no session exists, don't download
     if (!report.session) {
-      alert("No active or past session to export.");
+      alert("No session found.");
       return;
     }
 
-    const sessionDate = new Date(report.session.openedAt).toLocaleString();
-    let csvLines = [];
+    const wb = XLSX.utils.book_new();
 
-    // --- 1. REPORT HEADER ---
-    csvLines.push(`"Nahjurrashad Islamic College - Daily Arrival Report"`);
-    csvLines.push(`"Session Opened:","${sessionDate}"`);
-    csvLines.push(
-      `"Gate Status:","${isOpen ? "Currently Open" : "Closed & Finalized"}"`,
-    );
-    csvLines.push(""); // Empty row for clean spacing in Excel
+    const data: any[][] = [];
 
-    // --- 2. ARRIVED STUDENTS SECTION ---
-    const arrivedCount = report.records ? report.records.length : 0;
-    csvLines.push(`"--- ARRIVED STUDENTS (${arrivedCount}) ---"`);
-    csvLines.push(
-      `"Student Name","Admission No","Class","Arrival Time","Status"`,
-    ); // Column Headers
+    // ===============================
+    // TITLE
+    // ===============================
+    data.push(["NAHJURRASHAD ISLAMIC COLLEGE"]);
 
-    if (report.records) {
-      report.records.forEach((rec: any) => {
-        const name = rec.student?.fullName || "Unknown";
-        const admnNo = rec.student?.username || "N/A";
-        const studentClass = rec.student?.class || "Unassigned";
-        const arrivalTime = new Date(rec.recordedTime).toLocaleTimeString();
+    data.push(["AFTER LEAVE ARRIVAL REPORT"]);
 
-        let status = "On Time";
-        if (rec.fineAssigned) status = "Fined (Late)";
-        else if (rec.isLate && rec.isExcused) status = "Excused";
+    data.push([]);
 
-        // Wrapped in quotes so commas inside names don't break Excel columns
-        csvLines.push(
-          `"${name}","${admnNo}","${studentClass}","${arrivalTime}","${status}"`,
-        );
-      });
-    }
+    // ===============================
+    // SESSION DETAILS
+    // ===============================
+    data.push(["SESSION INFORMATION"]);
 
-    // --- 3. MISSING STUDENTS SECTION ---
-    csvLines.push(""); // Empty row for clean spacing
-    const missing = report.missingStudents || [];
-    csvLines.push(`"--- MISSING STUDENTS (${missing.length}) ---"`);
+    data.push([
+      "Session Opened",
+      new Date(report.session.openedAt).toLocaleString(),
+    ]);
 
-    if (missing.length === 0) {
-      csvLines.push(`"All students arrived successfully!"`);
-    } else {
-      csvLines.push(`"Student Name","Admission No","Class","Status",""`); // Column Headers
-      missing.forEach((student: any) => {
-        const name = student.fullName || "Unknown";
-        const admnNo = student.username || "N/A";
-        const studentClass = student.class || "Unassigned";
+    data.push(["Gate Status", isOpen ? "OPEN" : "CLOSED & FINALIZED"]);
 
-        csvLines.push(`"${name}","${admnNo}","${studentClass}","Missing",""`);
-      });
-    }
+    data.push(["Generated At", new Date().toLocaleString()]);
 
-    // --- 4. GENERATE AND DOWNLOAD ---
-    const csvContent = csvLines.join("\n");
-    // Add BOM (Byte Order Mark) so Excel reads special characters correctly!
-    const blob = new Blob(["\uFEFF" + csvContent], {
-      type: "text/csv;charset=utf-8;",
+    data.push([]);
+
+    // ===============================
+    // SUMMARY
+    // ===============================
+    data.push(["REPORT SUMMARY"]);
+
+    data.push(["Total Arrived", report.records.length]);
+    data.push(["On Time", totalOnTime]);
+    data.push(["Fined", totalFined]);
+    data.push(["Excused", totalExcused]);
+    data.push(["Missing", missingStudents.length]);
+
+    data.push([]);
+    data.push([]);
+
+    // ===============================
+    // ARRIVED STUDENTS
+    // ===============================
+    data.push([`ARRIVED STUDENTS (${report.records.length})`]);
+
+    data.push([
+      "Student Name",
+      "Admission No",
+      "Class",
+      "Arrival Time",
+      "Status",
+    ]);
+
+    report.records.forEach((rec: any) => {
+      let status = "On Time";
+
+      if (rec.fineAssigned) {
+        status = "Fined";
+      } else if (rec.isLate && rec.isExcused) {
+        status = "Excused";
+      }
+
+      data.push([
+        rec.student?.fullName || "Unknown",
+        rec.student?.username || "N/A",
+        rec.student?.class || "Unassigned",
+        new Date(rec.recordedTime).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        status,
+      ]);
     });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute(
-      "download",
-      `Nahjurrashad_Arrivals_${new Date().toLocaleDateString().replace(/\//g, "-")}.csv`,
+
+    data.push([]);
+    data.push([]);
+
+    // ===============================
+    // MISSING STUDENTS
+    // ===============================
+    data.push([`MISSING STUDENTS (${missingStudents.length})`]);
+
+    data.push(["Student Name", "Admission No", "Class", "Status"]);
+
+    if (missingStudents.length === 0) {
+      data.push(["All students arrived successfully!"]);
+    } else {
+      missingStudents.forEach((student: any) => {
+        data.push([
+          student.fullName || "Unknown",
+          student.username || "N/A",
+          student.class || "Unassigned",
+          "Missing",
+        ]);
+      });
+    }
+
+    // ===============================
+    // CREATE SHEET
+    // ===============================
+    const ws = XLSX.utils.aoa_to_sheet(data);
+
+    // ===============================
+    // COLUMN WIDTHS
+    // ===============================
+    ws["!cols"] = [
+      { wch: 35 },
+      { wch: 20 },
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 20 },
+    ];
+
+    // ===============================
+    // MERGES
+    // ===============================
+    ws["!merges"] = [
+      {
+        s: { r: 0, c: 0 },
+        e: { r: 0, c: 4 },
+      },
+      {
+        s: { r: 1, c: 0 },
+        e: { r: 1, c: 4 },
+      },
+    ];
+
+    // ===============================
+    // STYLES
+    // ===============================
+
+    const titleStyle = {
+      font: {
+        bold: true,
+        sz: 20,
+        color: { rgb: "FFFFFF" },
+      },
+      alignment: {
+        horizontal: "center",
+        vertical: "center",
+      },
+      fill: {
+        fgColor: { rgb: "1E293B" },
+      },
+    };
+
+    const subTitleStyle = {
+      font: {
+        bold: true,
+        sz: 14,
+        color: { rgb: "FFFFFF" },
+      },
+      alignment: {
+        horizontal: "center",
+      },
+      fill: {
+        fgColor: { rgb: "334155" },
+      },
+    };
+
+    const sectionStyle = {
+      font: {
+        bold: true,
+        color: { rgb: "FFFFFF" },
+      },
+      fill: {
+        fgColor: { rgb: "2563EB" },
+      },
+      alignment: {
+        horizontal: "center",
+      },
+    };
+
+    const headerStyle = {
+      font: {
+        bold: true,
+        color: { rgb: "FFFFFF" },
+      },
+      fill: {
+        fgColor: { rgb: "0F172A" },
+      },
+      alignment: {
+        horizontal: "center",
+        vertical: "center",
+      },
+      border: {
+        top: { style: "thin", color: { rgb: "D1D5DB" } },
+        bottom: { style: "thin", color: { rgb: "D1D5DB" } },
+        left: { style: "thin", color: { rgb: "D1D5DB" } },
+        right: { style: "thin", color: { rgb: "D1D5DB" } },
+      },
+    };
+
+    const cellStyle = {
+      alignment: {
+        vertical: "center",
+        horizontal: "left",
+      },
+      border: {
+        top: { style: "thin", color: { rgb: "E5E7EB" } },
+        bottom: { style: "thin", color: { rgb: "E5E7EB" } },
+        left: { style: "thin", color: { rgb: "E5E7EB" } },
+        right: { style: "thin", color: { rgb: "E5E7EB" } },
+      },
+    };
+
+    // ===============================
+    // APPLY STYLES
+    // ===============================
+
+    const range = XLSX.utils.decode_range(ws["!ref"] || "");
+
+    for (let R = range.s.r; R <= range.e.r; ++R) {
+      for (let C = range.s.c; C <= range.e.c; ++C) {
+        const cellAddress = XLSX.utils.encode_cell({
+          r: R,
+          c: C,
+        });
+
+        if (!ws[cellAddress]) continue;
+
+        ws[cellAddress].s = { ...cellStyle };
+
+        // Main Title
+        if (R === 0) {
+          ws[cellAddress].s = titleStyle;
+        }
+
+        // Subtitle
+        if (R === 1) {
+          ws[cellAddress].s = subTitleStyle;
+        }
+
+        // Section Titles
+        if (
+          ws[cellAddress].v === "SESSION INFORMATION" ||
+          ws[cellAddress].v === "REPORT SUMMARY" ||
+          String(ws[cellAddress].v).includes("ARRIVED STUDENTS") ||
+          String(ws[cellAddress].v).includes("MISSING STUDENTS")
+        ) {
+          ws[cellAddress].s = sectionStyle;
+        }
+
+        // Table Headers
+        if (
+          ws[cellAddress].v === "Student Name" ||
+          ws[cellAddress].v === "Admission No" ||
+          ws[cellAddress].v === "Class" ||
+          ws[cellAddress].v === "Arrival Time" ||
+          ws[cellAddress].v === "Status"
+        ) {
+          ws[cellAddress].s = headerStyle;
+        }
+
+        // Status Coloring
+        if (ws[cellAddress].v === "On Time") {
+          ws[cellAddress].s = {
+            ...cellStyle,
+            fill: {
+              fgColor: { rgb: "DCFCE7" },
+            },
+            font: {
+              bold: true,
+              color: { rgb: "166534" },
+            },
+          };
+        }
+
+        if (ws[cellAddress].v === "Fined") {
+          ws[cellAddress].s = {
+            ...cellStyle,
+            fill: {
+              fgColor: { rgb: "FEE2E2" },
+            },
+            font: {
+              bold: true,
+              color: { rgb: "991B1B" },
+            },
+          };
+        }
+
+        if (ws[cellAddress].v === "Excused") {
+          ws[cellAddress].s = {
+            ...cellStyle,
+            fill: {
+              fgColor: { rgb: "FEF3C7" },
+            },
+            font: {
+              bold: true,
+              color: { rgb: "92400E" },
+            },
+          };
+        }
+
+        if (ws[cellAddress].v === "Missing") {
+          ws[cellAddress].s = {
+            ...cellStyle,
+            fill: {
+              fgColor: { rgb: "FECACA" },
+            },
+            font: {
+              bold: true,
+              color: { rgb: "7F1D1D" },
+            },
+          };
+        }
+      }
+    }
+
+    // ===============================
+    // ADD SHEET
+    // ===============================
+    XLSX.utils.book_append_sheet(wb, ws, "Arrival Report");
+
+    // ===============================
+    // EXPORT
+    // ===============================
+    const excelBuffer = XLSX.write(wb, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    const fileData = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    saveAs(
+      fileData,
+      `Arrival_Report_${new Date()
+        .toLocaleDateString()
+        .replace(/\//g, "-")}.xlsx`,
     );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   if (isLoading)
@@ -313,7 +579,7 @@ export default function AdminArrivalsPage() {
                 onClick={handleDownloadExcel}
                 className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2 rounded-xl font-bold transition-all shadow-md hover:shadow-lg active:scale-95 text-sm shrink-0"
               >
-                <Download size={16} /> Export CSV
+                <Download size={16} /> Export Excel
               </button>
             )}
           </div>
