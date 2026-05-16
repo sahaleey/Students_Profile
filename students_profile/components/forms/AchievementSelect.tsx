@@ -15,7 +15,12 @@ export default function AchievementSelect({
     if (found) {
       setSelected(found);
       // Pass the locked points and reason back up to your form state
-      onSelect(found.points, found.label);
+      onSelect(
+        typeof found.points === "number"
+          ? found.points
+          : parseInt(found.points as string),
+        found.label,
+      );
     }
   };
 
