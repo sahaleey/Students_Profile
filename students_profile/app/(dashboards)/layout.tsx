@@ -248,6 +248,11 @@ export default function DashboardLayout({
           icon: ClipboardList,
         },
         {
+          href: "/admin/security",
+          label: "Security Dashboard",
+          icon: AlertOctagon,
+        },
+        {
           href: "/admin/student-records",
           label: "Student Records",
           icon: FileText,
