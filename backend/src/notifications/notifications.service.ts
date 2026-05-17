@@ -78,16 +78,16 @@ export class NotificationsService {
   // Fetches a user's notifications (newest first)
   async getUserNotifications(userId: string) {
     return this.notifRepo.find({
-      where: { recipient: { id: userId } },
+      where: { recipient: { id: String(userId) } },
       order: { createdAt: 'DESC' },
-      take: 50, // Limit to last 50 so it doesn't slow down
+      take: 50,
     });
   }
 
   // Mark a specific notification as read
   async markAsRead(notifId: string, userId: string) {
     await this.notifRepo.update(
-      { id: notifId, recipient: { id: userId } },
+      { id: notifId, recipient: { id: String(userId) } },
       { isRead: true },
     );
     return { success: true };
@@ -96,7 +96,7 @@ export class NotificationsService {
   // Mark ALL as read
   async markAllAsRead(userId: string) {
     await this.notifRepo.update(
-      { recipient: { id: userId }, isRead: false },
+      { recipient: { id: String(userId) }, isRead: false },
       { isRead: true },
     );
     return { success: true };

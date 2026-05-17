@@ -34,11 +34,9 @@ export class Punishment {
   })
   status: PunishmentStatus = PunishmentStatus.ACTIVE;
 
-  // The student receiving the punishment
   @ManyToOne(() => User, { eager: true })
   student!: User;
 
-  // The Usthad who assigned it
   @ManyToOne(() => User, { eager: true })
   @JoinColumn()
   assignedBy!: User;
@@ -47,4 +45,7 @@ export class Punishment {
   createdAt!: Date;
   @Column({ default: 'PUNISHMENT' })
   actionType!: string;
+
+  @Column({ default: false })
+  isEscalated!: boolean;
 }

@@ -16,6 +16,7 @@ import { StaffModule } from './staff/staff.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import type { Provider } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 
 const throttlerGuardProvider: Provider = {
   provide: APP_GUARD,
@@ -24,6 +25,7 @@ const throttlerGuardProvider: Provider = {
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       {
         ttl: 60000,

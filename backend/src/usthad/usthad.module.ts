@@ -10,6 +10,7 @@ import { AcademicMonth } from '../admin/entities/academic-month.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { Arrival } from './entities/arrival.entity';
 import { ArrivalSession } from 'src/admin/entities/arrival-session.entity';
+import { UsthadCronService } from './usthad.cron.service';
 
 @Module({
   // 🚀 THIS IS THE CRUCIAL PART
@@ -26,6 +27,6 @@ import { ArrivalSession } from 'src/admin/entities/arrival-session.entity';
     NotificationsModule,
   ],
   controllers: [UsthadController],
-  providers: [UsthadService],
+  providers: [UsthadService, UsthadCronService],
 })
 export class UsthadModule {}
