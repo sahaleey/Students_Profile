@@ -40,7 +40,7 @@ export default function ChangePasswordPage() {
     setIsSubmitting(true);
     try {
       const response = await fetch(
-        "http://localhost:3001/auth/change-password",
+        "https://students-profile.onrender.com/auth/change-password",
         {
           method: "POST",
           headers: {

@@ -43,11 +43,14 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:3001/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+      const response = await fetch(
+        "https://students-profile.onrender.com/auth/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        },
+      );
 
       // 🚀 THE FIX: If the response is not OK, extract the exact error message from NestJS
       if (!response.ok) {
@@ -64,7 +67,7 @@ export default function LoginPage() {
         const fcmToken = await fetchFirebaseToken();
         if (fcmToken) {
           const fcmResponse = await fetch(
-            "http://localhost:3001/users/update-fcm-token",
+            "https://students-profile.onrender.com/users/update-fcm-token",
             {
               method: "POST",
               headers: {

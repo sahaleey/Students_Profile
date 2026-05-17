@@ -10,21 +10,21 @@ import {
   AlertTriangle,
   MessageSquare,
   XCircle,
-  ChevronLeft, // 🚀 Imported
-  ChevronRight, // 🚀 Imported
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import toast from "react-hot-toast"; // 🚀 Imported toast!
 
 export default function VerificationInboxPage() {
   const [submissions, setSubmissions] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSub, setSelectedSub] = useState<any | null>(null);
 
-  // 🚀 1. Added Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
 
-  // State for points when approving achievements
-  const [pointsToAward, setPointsToAward] = useState<string>("50");
+  // 🚀 Changed default from 50 to 20
+  const [pointsToAward, setPointsToAward] = useState<string>("20");
   const [isProcessing, setIsProcessing] = useState(false);
 
   const getToken = () => localStorage.getItem("token");
@@ -32,9 +32,12 @@ export default function VerificationInboxPage() {
   // FETCH ALL SUBMISSIONS
   const fetchData = async () => {
     try {
-      const response = await fetch("http://localhost:3001/usthad/attachments", {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const response = await fetch(
+        "https://students-profile.onrender.com/usthad/attachments",
+        {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        },
+      );
       if (response.ok) {
         setSubmissions(await response.json());
       }
@@ -47,12 +50,10 @@ export default function VerificationInboxPage() {
     fetchData();
   }, []);
 
-  // 🚀 2. Reset to Page 1 whenever search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  // FILTERING
   const pendingSubmissions = submissions.filter(
     (s) => s.status === "PENDING" || s.status === "Pending Verification",
   );
@@ -62,7 +63,6 @@ export default function VerificationInboxPage() {
     return searchString.includes(searchTerm.toLowerCase());
   });
 
-  // 🚀 3. Calculate Pagination Data
   const totalPages = Math.ceil(filteredList.length / ITEMS_PER_PAGE) || 1;
   const paginatedList = filteredList.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
@@ -72,19 +72,36 @@ export default function VerificationInboxPage() {
   // ACTION HANDLER (APPROVE / REJECT)
   const handleAction = async (action: "APPROVED" | "REJECTED") => {
     if (!selectedSub) return;
+
+    const isAchievement = !selectedSub.targetPunishment;
+
+    // 🚀 NEW: Point Limit Validation before hitting the backend
+    if (action === "APPROVED" && isAchievement) {
+      const parsedPoints = parseInt(pointsToAward, 10);
+
+      if (isNaN(parsedPoints) || parsedPoints < 1) {
+        toast.error("Points must be at least 1.");
+        return;
+      }
+
+      if (parsedPoints > 20) {
+        toast.error("Maximum 20 points allowed per achievement!");
+        setPointsToAward("20"); // Automatically reset it back to max allowed
+        return; // Stop the function here so it doesn't process!
+      }
+    }
+
     setIsProcessing(true);
 
     try {
-      const isAchievement = !selectedSub.targetPunishment;
-
-      // If it's an achievement and we are approving, we MUST send points!
       const payload: any = { status: action };
+
       if (action === "APPROVED" && isAchievement) {
         payload.points = parseInt(pointsToAward, 10);
       }
 
       const response = await fetch(
-        `http://localhost:3001/usthad/submissions/${selectedSub.id}/verify`,
+        `https://students-profile.onrender.com/usthad/submissions/${selectedSub.id}/verify`,
         {
           method: "PATCH",
           headers: {
@@ -97,23 +114,22 @@ export default function VerificationInboxPage() {
 
       if (!response.ok) throw new Error("Failed to verify");
 
-      // Success! Remove from list and clear selection
       setSubmissions((prev) => prev.filter((s) => s.id !== selectedSub.id));
       setSelectedSub(null);
-      setPointsToAward("50"); // reset
+      setPointsToAward("20"); // 🚀 Reset to 20 instead of 50
 
-      // Safety check: if approving the last item on a page, drop back one page
+      toast.success(`Submission ${action.toLowerCase()} successfully!`);
+
       if (paginatedList.length === 1 && currentPage > 1) {
         setCurrentPage((prev) => prev - 1);
       }
     } catch (error) {
-      alert("Error processing submission.");
+      toast.error("Error processing submission.");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Helper to split our formatted title
   const getDisplayContent = (fullTitle: string) => {
     const parts = fullTitle.split(" | Content: ");
     return {
@@ -148,7 +164,6 @@ export default function VerificationInboxPage() {
           </div>
         </div>
 
-        {/* 🚀 4. Map over paginatedList instead of filteredList */}
         <div className="flex-1 overflow-y-auto p-2 space-y-2 bg-gray-50">
           {paginatedList.length === 0 ? (
             <p className="text-center text-gray-400 mt-10 p-4">
@@ -199,7 +214,6 @@ export default function VerificationInboxPage() {
           )}
         </div>
 
-        {/* 🚀 5. Pagination Footer (Only shows if more than 1 page) */}
         {totalPages > 1 && (
           <div className="p-4 border-t border-gray-100 bg-white flex items-center justify-between">
             <button
@@ -295,6 +309,7 @@ export default function VerificationInboxPage() {
                       <input
                         type="number"
                         min="1"
+                        max="20" /* 🚀 Added max attribute for UI safety */
                         value={pointsToAward}
                         onChange={(e) => setPointsToAward(e.target.value)}
                         className="w-20 p-2 text-center text-black font-bold border border-emerald-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500"

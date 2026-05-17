@@ -47,9 +47,12 @@ export default function SubWingProgramsPage() {
   // FETCH PROGRAMS
   const fetchPrograms = async () => {
     try {
-      const res = await fetch("http://localhost:3001/subwing/programs", {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const res = await fetch(
+        "https://students-profile.onrender.com/subwing/programs",
+        {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        },
+      );
       if (res.ok) setPrograms(await res.json());
     } catch (error) {
       toast.error("Failed to fetch programs");
@@ -77,8 +80,8 @@ export default function SubWingProgramsPage() {
 
     try {
       const url = editingProgram
-        ? `http://localhost:3001/subwing/programs/${editingProgram.id}` // PUT endpoint
-        : "http://localhost:3001/subwing/programs"; // POST endpoint
+        ? `https://students-profile.onrender.com/subwing/programs/${editingProgram.id}` // PUT endpoint
+        : "https://students-profile.onrender.com/subwing/programs"; // POST endpoint
 
       const method = editingProgram ? "PUT" : "POST";
 
@@ -114,10 +117,13 @@ export default function SubWingProgramsPage() {
       return;
 
     try {
-      const res = await fetch(`http://localhost:3001/subwing/programs/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const res = await fetch(
+        `https://students-profile.onrender.com/subwing/programs/${id}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${getToken()}` },
+        },
+      );
 
       if (!res.ok) throw new Error("Delete failed");
 

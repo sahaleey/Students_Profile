@@ -48,7 +48,7 @@ export default function AdminCentre() {
 
     try {
       const response = await fetch(
-        "http://localhost:3001/admin/users", // Fixed the URL to your live backend
+        "https://students-profile.onrender.com/admin/users", // Fixed the URL to your live backend
         {
           method: "POST",
           headers: {

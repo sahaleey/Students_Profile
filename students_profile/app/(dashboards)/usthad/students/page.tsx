@@ -21,9 +21,12 @@ export default function HisanStudentDirectory() {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const res = await fetch("http://localhost:3001/usthad/students", {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        });
+        const res = await fetch(
+          "https://students-profile.onrender.com/usthad/students",
+          {
+            headers: { Authorization: `Bearer ${getToken()}` },
+          },
+        );
         if (res.ok) setStudents(await res.json());
       } catch (error) {
         console.error("Failed to fetch students");

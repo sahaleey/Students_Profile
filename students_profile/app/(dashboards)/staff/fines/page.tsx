@@ -18,9 +18,12 @@ export default function LibraryFinesPage() {
 
   useEffect(() => {
     const fetchStudents = async () => {
-      const res = await fetch("http://localhost:3001/usthad/students", {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      const res = await fetch(
+        "https://students-profile.onrender.com/usthad/students",
+        {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        },
+      );
       if (res.ok) setStudents(await res.json());
     };
     fetchStudents();
@@ -40,19 +43,22 @@ export default function LibraryFinesPage() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("http://localhost:3001/staff/fines", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`,
+      const res = await fetch(
+        "https://students-profile.onrender.com/staff/fines",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`,
+          },
+          body: JSON.stringify({
+            studentId: selectedStudent.id,
+            title,
+            description,
+            amount,
+          }),
         },
-        body: JSON.stringify({
-          studentId: selectedStudent.id,
-          title,
-          description,
-          amount,
-        }),
-      });
+      );
 
       if (res.ok) {
         alert("Fine Issued Successfully!");

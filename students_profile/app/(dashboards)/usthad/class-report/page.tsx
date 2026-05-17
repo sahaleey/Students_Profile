@@ -22,9 +22,12 @@ export default function ClassWiseReportPage() {
   useEffect(() => {
     const fetchReportData = async () => {
       try {
-        const res = await fetch("http://localhost:3001/usthad/class-report", {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        });
+        const res = await fetch(
+          "https://students-profile.onrender.com/usthad/class-report",
+          {
+            headers: { Authorization: `Bearer ${getToken()}` },
+          },
+        );
         if (res.ok) {
           const data = await res.json();
           setAllStudents(data);
