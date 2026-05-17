@@ -33,12 +33,9 @@ export default function HisanAnalyticsHub() {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const res = await fetch(
-          "https://students-profile.onrender.com/subwing/analytics",
-          {
-            headers: { Authorization: `Bearer ${getToken()}` },
-          },
-        );
+        const res = await fetch("http://localhost:3001/subwing/analytics", {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        });
         if (res.ok) {
           const data = await res.json();
           setStats(data.stats);

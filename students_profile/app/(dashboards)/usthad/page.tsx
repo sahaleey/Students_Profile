@@ -46,14 +46,11 @@ export default function UsthadDashboard() {
     // 2. Fetch Dashboard Data from Backend
     const fetchDashboard = async () => {
       try {
-        const response = await fetch(
-          "https://students-profile.onrender.com/usthad/dashboard",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+        const response = await fetch("http://localhost:3001/usthad/dashboard", {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        );
+        });
 
         const data = await response.json();
 
@@ -93,7 +90,7 @@ export default function UsthadDashboard() {
 
       // 3. Make the API call
       const response = await fetch(
-        `https://students-profile.onrender.com/usthad/submissions/${submissionId}/verify`,
+        `http://localhost:3001/usthad/submissions/${submissionId}/verify`,
         {
           method: "PATCH",
           headers: {

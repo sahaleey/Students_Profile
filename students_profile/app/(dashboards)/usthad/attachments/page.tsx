@@ -32,12 +32,9 @@ export default function VerificationInboxPage() {
   // FETCH ALL SUBMISSIONS
   const fetchData = async () => {
     try {
-      const response = await fetch(
-        "https://students-profile.onrender.com/usthad/attachments",
-        {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        },
-      );
+      const response = await fetch("http://localhost:3001/usthad/attachments", {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
       if (response.ok) {
         setSubmissions(await response.json());
       }
@@ -87,7 +84,7 @@ export default function VerificationInboxPage() {
       }
 
       const response = await fetch(
-        `https://students-profile.onrender.com/usthad/submissions/${selectedSub.id}/verify`,
+        `http://localhost:3001/usthad/submissions/${selectedSub.id}/verify`,
         {
           method: "PATCH",
           headers: {

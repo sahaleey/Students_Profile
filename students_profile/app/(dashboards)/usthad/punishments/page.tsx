@@ -71,17 +71,14 @@ export default function PunishmentsPage() {
     try {
       const token = getToken();
       // Fetch Students
-      const studentRes = await fetch(
-        "https://students-profile.onrender.com/usthad/students",
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const studentRes = await fetch("http://localhost:3001/usthad/students", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (studentRes.ok) setRawStudents(await studentRes.json());
 
       // Fetch Punishments History
       const punishRes = await fetch(
-        "https://students-profile.onrender.com/usthad/punishments",
+        "http://localhost:3001/usthad/punishments",
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -129,21 +126,18 @@ export default function PunishmentsPage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(
-        "https://students-profile.onrender.com/usthad/punishments",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getToken()}`,
-          },
-          body: JSON.stringify({
-            studentId: selectedStudent.id,
-            ...formData,
-            actionType,
-          }),
+      const response = await fetch("http://localhost:3001/usthad/punishments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
         },
-      );
+        body: JSON.stringify({
+          studentId: selectedStudent.id,
+          ...formData,
+          actionType,
+        }),
+      });
 
       if (!response.ok) throw new Error("Failed to assign punishment");
 
@@ -173,7 +167,7 @@ export default function PunishmentsPage() {
 
     try {
       const response = await fetch(
-        `https://students-profile.onrender.com/usthad/punishments/${punishmentId}`,
+        `http://localhost:3001/usthad/punishments/${punishmentId}`,
         {
           method: "DELETE",
           headers: {

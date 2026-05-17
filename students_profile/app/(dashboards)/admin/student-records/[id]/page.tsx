@@ -34,7 +34,7 @@ export default function StudentFullRecordPage() {
       try {
         const token = localStorage.getItem("token");
         const res = await fetch(
-          `https://students-profile.onrender.com/admin/students/${id}/full-record`,
+          `http://localhost:3001/admin/students/${id}/full-record`,
           {
             headers: { Authorization: `Bearer ${token}` },
           },

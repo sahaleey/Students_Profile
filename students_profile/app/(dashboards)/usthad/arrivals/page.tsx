@@ -39,12 +39,9 @@ export default function LeaveArrivalsPage() {
   // Wrapped in useCallback so we can call it after every successful submission
   const fetchGateStatus = useCallback(async () => {
     try {
-      const res = await fetch(
-        "https://students-profile.onrender.com/admin/arrivals/status",
-        {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        },
-      );
+      const res = await fetch("http://localhost:3001/admin/arrivals/status", {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
       if (res.ok) {
         const data = await res.json();
         setIsGateOpen(data.isOpen);
@@ -63,12 +60,9 @@ export default function LeaveArrivalsPage() {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const res = await fetch(
-          "https://students-profile.onrender.com/usthad/class-report",
-          {
-            headers: { Authorization: `Bearer ${getToken()}` },
-          },
-        );
+        const res = await fetch("http://localhost:3001/usthad/class-report", {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        });
         if (res.ok) {
           const data = await res.json();
           setAllStudents(data);
@@ -109,21 +103,18 @@ export default function LeaveArrivalsPage() {
     setProcessingId(studentId);
 
     try {
-      const res = await fetch(
-        "https://students-profile.onrender.com/usthad/arrivals",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getToken()}`,
-          },
-          body: JSON.stringify({
-            studentId,
-            arrivalTime: timeValue,
-            isExcused: excuses[studentId] || false, // Send excuse status
-          }),
+      const res = await fetch("http://localhost:3001/usthad/arrivals", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
         },
-      );
+        body: JSON.stringify({
+          studentId,
+          arrivalTime: timeValue,
+          isExcused: excuses[studentId] || false, // Send excuse status
+        }),
+      });
 
       if (res.ok) {
         // Mark them as already arrived in the UI immediately

@@ -21,12 +21,9 @@ export default function StaffDashboard() {
     const fetchDashboard = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(
-          "https://students-profile.onrender.com/staff/dashboard",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        const res = await fetch("http://localhost:3001/staff/dashboard", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (res.ok) setData(await res.json());
       } finally {
         setIsLoading(false);

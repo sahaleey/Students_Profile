@@ -30,12 +30,9 @@ export default function StudentPointsProfile() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch(
-          `https://students-profile.onrender.com/usthad/students/${id}`,
-          {
-            headers: { Authorization: `Bearer ${getToken()}` },
-          },
-        );
+        const res = await fetch(`http://localhost:3001/usthad/students/${id}`, {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        });
         if (res.ok) setData(await res.json());
       } catch {
         console.error("Failed to fetch points profile");

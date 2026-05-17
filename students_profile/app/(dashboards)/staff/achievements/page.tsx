@@ -37,12 +37,9 @@ function AchievementManager() {
 
   useEffect(() => {
     const fetchStudents = async () => {
-      const res = await fetch(
-        "https://students-profile.onrender.com/usthad/students",
-        {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        },
-      );
+      const res = await fetch("http://localhost:3001/usthad/students", {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
       if (res.ok) setStudents(await res.json());
     };
     fetchStudents();
@@ -77,23 +74,20 @@ function AchievementManager() {
       // Format the title to include the department! e.g., "[Library] Read 5 books"
       const formattedTitle = `[${department}] ${title}`;
 
-      const res = await fetch(
-        "https://students-profile.onrender.com/staff/achievements",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getToken()}`,
-          },
-          body: JSON.stringify({
-            studentId: selectedStudent.id,
-            title: formattedTitle,
-            points: pointsNum,
-            isSpecialHighlight,
-            department: department,
-          }),
+      const res = await fetch("http://localhost:3001/staff/achievements", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
         },
-      );
+        body: JSON.stringify({
+          studentId: selectedStudent.id,
+          title: formattedTitle,
+          points: pointsNum,
+          isSpecialHighlight,
+          department: department,
+        }),
+      });
 
       if (!res.ok) {
         const err = await res.json();

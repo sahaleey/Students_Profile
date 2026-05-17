@@ -140,17 +140,14 @@ export default function DashboardLayout({
         return;
       }
 
-      await fetch(
-        "https://students-profile.onrender.com/users/update-fcm-token",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
-          },
-          body: JSON.stringify({ token }),
+      await fetch("http://localhost:3001/users/update-fcm-token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
         },
-      );
+        body: JSON.stringify({ token }),
+      });
 
       localStorage.setItem("fcm_token", token);
       console.log("Token saved to DB successfully!");
@@ -176,12 +173,9 @@ export default function DashboardLayout({
         const token = localStorage.getItem("token");
 
         // Fetch Unread Notifications
-        const notifRes = await fetch(
-          "https://students-profile.onrender.com/notifications",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        const notifRes = await fetch("http://localhost:3001/notifications", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (notifRes.ok) {
           let notifs = [];
           try {
@@ -195,7 +189,7 @@ export default function DashboardLayout({
 
         // 🚀 Fetch Global Special Highlight
         const highlightRes = await fetch(
-          "https://students-profile.onrender.com/usthad/special-highlight",
+          "http://localhost:3001/usthad/special-highlight",
           {
             headers: { Authorization: `Bearer ${token}` },
           },

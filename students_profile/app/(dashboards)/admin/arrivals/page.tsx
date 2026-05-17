@@ -41,10 +41,10 @@ export default function AdminArrivalsPage() {
   const fetchData = async () => {
     try {
       const [statusRes, reportRes] = await Promise.all([
-        fetch("https://students-profile.onrender.com/admin/arrivals/status", {
+        fetch("http://localhost:3001/admin/arrivals/status", {
           headers: { Authorization: `Bearer ${getToken()}` },
         }),
-        fetch("https://students-profile.onrender.com/admin/arrivals/report", {
+        fetch("http://localhost:3001/admin/arrivals/report", {
           headers: { Authorization: `Bearer ${getToken()}` },
         }),
       ]);
@@ -61,17 +61,14 @@ export default function AdminArrivalsPage() {
   }, []);
 
   const toggleGate = async () => {
-    const res = await fetch(
-      "https://students-profile.onrender.com/admin/arrivals/toggle",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`,
-        },
-        body: JSON.stringify({ isOpen: !isOpen }),
+    const res = await fetch("http://localhost:3001/admin/arrivals/toggle", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
       },
-    );
+      body: JSON.stringify({ isOpen: !isOpen }),
+    });
     if (res.ok) fetchData();
   };
 

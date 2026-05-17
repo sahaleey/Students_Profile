@@ -28,7 +28,7 @@ export default function SecurityPage() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   // Helper to get the API URL (falls back to localhost if env is missing)
-  const API_URL = "https://students-profile.onrender.com";
+  const API_URL = "http://localhost:3001";
 
   // 1. Fetch the data from NestJS
   const fetchSessions = async () => {

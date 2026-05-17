@@ -30,12 +30,9 @@ export default function StudentRecordsDirectory() {
     const fetchStudents = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await fetch(
-          "https://students-profile.onrender.com/admin/users",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          },
-        );
+        const res = await fetch("http://localhost:3001/admin/users", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const data = await res.json();
         // 🚀 Filter out staff/usthads so we only see students
         setStudents(data.filter((u: any) => u.role === "student"));

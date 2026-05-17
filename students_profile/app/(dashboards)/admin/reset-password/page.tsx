@@ -38,7 +38,7 @@ export default function AdminPasswordResetPage() {
 
   const ITEMS_PER_PAGE = 8;
 
-  const API_URL = "https://students-profile.onrender.com";
+  const API_URL = "http://localhost:3001";
 
   const getToken = () => {
     if (typeof window === "undefined") return null;

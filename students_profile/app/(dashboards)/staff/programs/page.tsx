@@ -12,12 +12,9 @@ export default function ManageProgramsPage() {
   const getToken = () => localStorage.getItem("token");
 
   const fetchPrograms = async () => {
-    const res = await fetch(
-      "https://students-profile.onrender.com/staff/programs",
-      {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      },
-    );
+    const res = await fetch("http://localhost:3001/staff/programs", {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
     if (res.ok) setPrograms(await res.json());
   };
 
@@ -29,17 +26,14 @@ export default function ManageProgramsPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await fetch(
-        "https://students-profile.onrender.com/staff/programs",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${getToken()}`,
-          },
-          body: JSON.stringify({ title, description }),
+      const res = await fetch("http://localhost:3001/staff/programs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getToken()}`,
         },
-      );
+        body: JSON.stringify({ title, description }),
+      });
       if (res.ok) {
         setTitle("");
         setDescription("");
