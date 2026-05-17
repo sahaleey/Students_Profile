@@ -30,7 +30,7 @@ export default function NotificationsPage() {
   const router = useRouter();
 
   // 🚀 Best Practice: Support Vercel deployments!
-  const API_URL = "https://students-profile.onrender.com";
+  const API_URL = process.env.API_URL;
 
   const getToken = () => localStorage.getItem("token");
 
