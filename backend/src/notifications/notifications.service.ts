@@ -64,8 +64,6 @@ export class NotificationsService {
         );
       }
     } catch (error) {
-      // We don't throw the error because we don't want to break the whole app
-      // just because a parent's phone was offline or token expired!
       console.error(
         `❌ Failed to send push notification to ${data.recipientId}:`,
         error,

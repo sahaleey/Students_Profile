@@ -15,7 +15,7 @@ export class UsthadCronService {
     private notifService: NotificationsService,
   ) {}
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_DAY_AT_8AM)
   async checkOverduePunishments() {
     this.logger.log('Scanning for overdue 1-week punishments...');
 

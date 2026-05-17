@@ -7,34 +7,64 @@ import {
   AlertTriangle,
   Info,
   Check,
-  Trash2,
   ArrowRight,
+  RefreshCw, // 🚀 Added refresh icon
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+
+interface NotificationRecord {
+  id: string;
+  title: string;
+  message: string;
+  type: "INFO" | "WARNING" | "SUCCESS" | "ERROR";
+  link?: string;
+  isRead: boolean;
+  createdAt: string;
+}
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false); // 🚀 Added refreshing state
   const router = useRouter();
+
+  // 🚀 Best Practice: Support Vercel deployments!
+  const API_URL = "https://students-profile.onrender.com";
 
   const getToken = () => localStorage.getItem("token");
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (showToast = false) => {
+    if (showToast) setIsRefreshing(true);
     try {
-      const res = await fetch(
-        "https://students-profile.onrender.com/notifications",
-        {
-          headers: { Authorization: `Bearer ${getToken()}` },
-        },
-      );
+      const token = getToken();
+      if (!token) {
+        router.push("/login");
+        return;
+      }
+
+      const res = await fetch(`${API_URL}/notifications`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.status === 401 || res.status === 403) {
+        localStorage.removeItem("token");
+        router.push("/login");
+        return;
+      }
+
       if (res.ok) {
         setNotifications(await res.json());
+        if (showToast) toast.success("Inbox refreshed!");
+      } else {
+        throw new Error("Failed to fetch");
       }
     } catch (error) {
-      console.error("Failed to fetch notifications");
+      console.error(error);
+      toast.error("Failed to load notifications.");
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
   };
 
@@ -43,58 +73,53 @@ export default function NotificationsPage() {
   }, []);
 
   const handleMarkAsRead = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent clicking the row if they just click the checkmark
+    e.stopPropagation();
     try {
-      const res = await fetch(
-        `https://students-profile.onrender.com/notifications/${id}/read`,
-        {
-          method: "PATCH",
-          headers: { Authorization: `Bearer ${getToken()}` },
-        },
+      setNotifications(
+        notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
       );
-      if (res.ok) {
-        setNotifications(
-          notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
-        );
-      }
+
+      const res = await fetch(`${API_URL}/notifications/${id}/read`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+
+      if (!res.ok) throw new Error("Failed");
     } catch (error) {
-      console.error("Failed to mark as read");
+      console.error(error);
+      fetchNotifications();
     }
   };
 
   const handleMarkAllAsRead = async () => {
     try {
-      const res = await fetch(
-        "https://students-profile.onrender.com/notifications/read-all",
-        {
-          method: "PATCH",
-          headers: { Authorization: `Bearer ${getToken()}` },
-        },
-      );
-      if (res.ok) {
-        setNotifications(notifications.map((n) => ({ ...n, isRead: true })));
-      }
+      setNotifications(notifications.map((n) => ({ ...n, isRead: true })));
+      toast.success("All caught up!");
+
+      const res = await fetch(`${API_URL}/notifications/read-all`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+
+      if (!res.ok) throw new Error("Failed");
     } catch (error) {
-      console.error("Failed to mark all as read");
+      console.error(error);
+      toast.error("Failed to mark all as read.");
+      fetchNotifications();
     }
   };
 
-  const handleNotificationClick = async (notif: any) => {
+  const handleNotificationClick = async (notif: NotificationRecord) => {
     if (!notif.isRead) {
-      // Optimistically mark as read in UI
       setNotifications(
         notifications.map((n) =>
           n.id === notif.id ? { ...n, isRead: true } : n,
         ),
       );
-      // Tell backend in the background
-      fetch(
-        `https://students-profile.onrender.com/notifications/${notif.id}/read`,
-        {
-          method: "PATCH",
-          headers: { Authorization: `Bearer ${getToken()}` },
-        },
-      ).catch(console.error);
+      fetch(`${API_URL}/notifications/${notif.id}/read`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${getToken()}` },
+      }).catch(console.error);
     }
 
     if (notif.link) {
@@ -154,14 +179,29 @@ export default function NotificationsPage() {
           </div>
         </div>
 
-        {unreadCount > 0 && (
+        <div className="flex items-center gap-3">
+          {/* 🚀 NEW: Manual Refresh Button */}
           <button
-            onClick={handleMarkAllAsRead}
-            className="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm"
+            onClick={() => fetchNotifications(true)}
+            disabled={isRefreshing}
+            className="p-2.5 bg-white border border-gray-200 text-gray-600 rounded-xl hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
+            title="Refresh Inbox"
           >
-            <Check size={16} /> Mark all as read
+            <RefreshCw
+              size={18}
+              className={isRefreshing ? "animate-spin" : ""}
+            />
           </button>
-        )}
+
+          {unreadCount > 0 && (
+            <button
+              onClick={handleMarkAllAsRead}
+              className="px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors flex items-center gap-2 shadow-sm"
+            >
+              <Check size={16} /> Mark all read
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Notifications List */}
@@ -170,7 +210,7 @@ export default function NotificationsPage() {
           <h2 className="font-bold text-gray-800 flex items-center gap-2">
             Inbox
             {unreadCount > 0 && (
-              <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full">
+              <span className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full shadow-sm animate-in zoom-in">
                 {unreadCount} New
               </span>
             )}
@@ -181,7 +221,9 @@ export default function NotificationsPage() {
           {notifications.length === 0 ? (
             <div className="p-12 text-center text-gray-400">
               <Bell size={48} className="mx-auto mb-4 opacity-20" />
-              <p className="font-medium text-lg">You're all caught up!</p>
+              <p className="font-medium text-lg text-gray-600">
+                You're all caught up!
+              </p>
               <p className="text-sm mt-1">No notifications to display.</p>
             </div>
           ) : (
@@ -197,7 +239,9 @@ export default function NotificationsPage() {
               >
                 {/* Icon */}
                 <div
-                  className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${getBgColor(notif.type)}`}
+                  className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${getBgColor(
+                    notif.type,
+                  )}`}
                 >
                   {getIcon(notif.type)}
                 </div>
@@ -206,22 +250,31 @@ export default function NotificationsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start gap-2 mb-1">
                     <h3
-                      className={`font-bold text-gray-900 truncate ${!notif.isRead ? "text-lg" : ""}`}
+                      className={`font-bold text-gray-900 truncate ${
+                        !notif.isRead ? "text-lg" : ""
+                      }`}
                     >
                       {notif.title}
                     </h3>
                     <span className="text-xs text-gray-400 whitespace-nowrap pt-1">
-                      {new Date(notif.createdAt).toLocaleDateString()}
+                      {new Date(notif.createdAt).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </span>
                   </div>
                   <p
-                    className={`text-sm text-gray-600 ${!notif.isRead ? "font-medium text-gray-800" : ""}`}
+                    className={`text-sm text-gray-600 ${
+                      !notif.isRead ? "font-medium text-gray-800" : ""
+                    }`}
                   >
                     {notif.message}
                   </p>
 
                   {notif.link && (
-                    <div className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800">
+                    <div className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors">
                       View Details <ArrowRight size={12} />
                     </div>
                   )}
@@ -234,7 +287,7 @@ export default function NotificationsPage() {
                     className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-blue-600 hover:bg-blue-100 transition-colors"
                     title="Mark as read"
                   >
-                    <div className="w-2.5 h-2.5 bg-blue-500 rounded-full" />
+                    <div className="w-2.5 h-2.5 bg-blue-500 rounded-full shadow-sm" />
                   </button>
                 )}
               </div>
