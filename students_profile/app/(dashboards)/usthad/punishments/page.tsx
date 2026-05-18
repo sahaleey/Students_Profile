@@ -14,12 +14,12 @@ import {
   ChevronLeft, // 🚀 Added
   ChevronRight, // 🚀 Added
 } from "lucide-react";
-import toast from "react-hot-toast"; // Ensure you have this installed from the previous steps!
+import toast from "react-hot-toast";
 
 interface Student {
   id: string;
   name: string;
-  username: string; // The Admission Number
+  username: string;
   className: string;
 }
 
@@ -386,7 +386,7 @@ export default function PunishmentsPage() {
                 </div>
                 <div>
                   <label className="text-sm font-bold text-gray-700">
-                    Action Name
+                    Action Assigned By The Student
                   </label>
                   <input
                     type="text"
@@ -395,7 +395,7 @@ export default function PunishmentsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
-                    placeholder="e.g., Library Duty"
+                    placeholder="e.g., Library Duty, Warning Notice, Cleaning Task"
                     className="w-full text-black mt-1 p-2 bg-[#fafafa] border border-gray-200 rounded-xl outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
                   />
                 </div>
@@ -429,7 +429,7 @@ export default function PunishmentsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
                     }
-                    placeholder="Describe the incident..."
+                    placeholder="Describe the Task..."
                     className="w-full text-black mt-1 p-2 bg-[#fafafa] border border-gray-200 rounded-xl outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 min-h-[80px]"
                   />
                 </div>

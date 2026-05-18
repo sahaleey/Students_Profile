@@ -12,8 +12,9 @@ import {
   XCircle,
   ChevronLeft,
   ChevronRight,
+  ArrowLeft, // 🚀 NEW: Imported for the mobile back button!
 } from "lucide-react";
-import toast from "react-hot-toast"; // 🚀 Imported toast!
+import toast from "react-hot-toast";
 
 export default function VerificationInboxPage() {
   const [submissions, setSubmissions] = useState<any[]>([]);
@@ -23,7 +24,6 @@ export default function VerificationInboxPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
 
-  // 🚀 Changed default from 50 to 20
   const [pointsToAward, setPointsToAward] = useState<string>("20");
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -75,7 +75,6 @@ export default function VerificationInboxPage() {
 
     const isAchievement = !selectedSub.targetPunishment;
 
-    // 🚀 NEW: Point Limit Validation before hitting the backend
     if (action === "APPROVED" && isAchievement) {
       const parsedPoints = parseInt(pointsToAward, 10);
 
@@ -86,8 +85,8 @@ export default function VerificationInboxPage() {
 
       if (parsedPoints > 20) {
         toast.error("Maximum 20 points allowed per achievement!");
-        setPointsToAward("20"); // Automatically reset it back to max allowed
-        return; // Stop the function here so it doesn't process!
+        setPointsToAward("20");
+        return;
       }
     }
 
@@ -116,7 +115,7 @@ export default function VerificationInboxPage() {
 
       setSubmissions((prev) => prev.filter((s) => s.id !== selectedSub.id));
       setSelectedSub(null);
-      setPointsToAward("20"); // 🚀 Reset to 20 instead of 50
+      setPointsToAward("20");
 
       toast.success(`Submission ${action.toLowerCase()} successfully!`);
 
@@ -139,10 +138,18 @@ export default function VerificationInboxPage() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-120px)] animate-fadeInUp">
-      {/* LEFT COLUMN: THE INBOX LIST */}
-      <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
-        <div className="bg-[#004643] p-5 text-white">
+    // 🚀 FIX 1: Flex col on mobile, Grid on Desktop. Height properly calculated for mobile bars.
+    <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6 lg:gap-8 h-[calc(100vh-100px)] lg:h-[calc(100vh-120px)] animate-fadeInUp">
+      {/* =========================================
+          LEFT COLUMN: THE INBOX LIST 
+          🚀 FIX 2: Hides entirely on mobile if a submission is selected!
+      ========================================= */}
+      <div
+        className={`lg:col-span-1 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex-col h-full ${
+          selectedSub ? "hidden lg:flex" : "flex"
+        }`}
+      >
+        <div className="bg-[#004643] p-5 text-white shrink-0">
           <h2 className="font-bold text-lg flex items-center gap-2">
             <Clock size={20} /> Pending Verification
           </h2>
@@ -151,7 +158,7 @@ export default function VerificationInboxPage() {
           </p>
         </div>
 
-        <div className="p-4 border-b border-gray-100">
+        <div className="p-4 border-b border-gray-100 shrink-0">
           <div className="relative">
             <Search className="absolute left-3 top-3 text-gray-400" size={18} />
             <input
@@ -164,7 +171,8 @@ export default function VerificationInboxPage() {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2 space-y-2 bg-gray-50">
+        {/* 🚀 FIX 3: flex-1 and overflow-y-auto ensures JUST the list scrolls, not the whole page */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50/50">
           {paginatedList.length === 0 ? (
             <p className="text-center text-gray-400 mt-10 p-4">
               Inbox is empty. No pending requests!
@@ -215,7 +223,7 @@ export default function VerificationInboxPage() {
         </div>
 
         {totalPages > 1 && (
-          <div className="p-4 border-t border-gray-100 bg-white flex items-center justify-between">
+          <div className="p-4 border-t border-gray-100 bg-white flex items-center justify-between shrink-0">
             <button
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
@@ -239,15 +247,24 @@ export default function VerificationInboxPage() {
         )}
       </div>
 
-      {/* RIGHT COLUMN: THE REVIEW PANEL */}
-      <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full relative">
+      {/* =========================================
+          RIGHT COLUMN: THE REVIEW PANEL 
+          🚀 FIX 4: Hides on mobile if NOTHING is selected. Takes full width if selected!
+      ========================================= */}
+      <div
+        className={`lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex-col h-full relative ${
+          !selectedSub ? "hidden lg:flex" : "flex"
+        }`}
+      >
         {!selectedSub ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400 p-8 text-center">
-            <FileText size={64} className="mb-4 text-gray-200" />
+          <div className="flex flex-col items-center justify-center h-full text-gray-400 p-8 text-center bg-gray-50/30">
+            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6 shadow-inner">
+              <FileText size={32} className="text-gray-300" />
+            </div>
             <h3 className="text-xl font-bold text-gray-700">
               Select a submission
             </h3>
-            <p className="mt-2">
+            <p className="mt-2 max-w-sm text-sm">
               Click on an item in the inbox to review the student's work and
               approve it.
             </p>
@@ -255,8 +272,16 @@ export default function VerificationInboxPage() {
         ) : (
           <div className="flex flex-col h-full animate-fadeInUp">
             {/* Header */}
-            <div className="p-6 border-b border-gray-100 bg-gray-50">
-              <h2 className="text-2xl font-bold text-gray-800 capitalize mb-1">
+            <div className="p-4 sm:p-6 border-b border-gray-100 bg-gray-50 shrink-0">
+              {/* 🚀 FIX 5: The Mobile Back Button */}
+              <button
+                onClick={() => setSelectedSub(null)}
+                className="lg:hidden flex items-center gap-2 text-[#004643] hover:text-[#003634] transition-colors w-fit text-sm font-bold mb-4 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100"
+              >
+                <ArrowLeft size={16} /> Back to Inbox
+              </button>
+
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-800 capitalize mb-1 pr-2">
                 {getDisplayContent(selectedSub.title).title}
               </h2>
               <p className="text-gray-500 text-sm">
@@ -268,9 +293,9 @@ export default function VerificationInboxPage() {
               </p>
             </div>
 
-            {/* Content Area */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* If clearing a punishment, show what it clears */}
+            {/* 🚀 FIX 6: Independent Scrolling Content Area */}
+            {/* flex-1 + overflow-y-auto guarantees it won't push the buttons off screen */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 bg-white">
               {selectedSub.targetPunishment && (
                 <div className="bg-red-50 border border-red-100 p-4 rounded-xl">
                   <h4 className="text-xs font-bold text-red-600 uppercase mb-1 flex items-center gap-1">
@@ -285,39 +310,39 @@ export default function VerificationInboxPage() {
                 </div>
               )}
 
-              {/* The Student's Work */}
               <div>
                 <h4 className="text-sm font-bold text-gray-700 uppercase mb-3 flex items-center gap-2">
                   <MessageSquare size={16} /> Student's Submission
                 </h4>
-                <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 text-gray-800 whitespace-pre-wrap leading-relaxed shadow-inner">
+                {/* Break-words prevents long essays without spaces from stretching the screen horizontally on mobile */}
+                <div className="bg-gray-50 p-5 rounded-xl border border-gray-200 text-gray-800 whitespace-pre-wrap leading-relaxed shadow-inner text-sm sm:text-base break-words">
                   {getDisplayContent(selectedSub.title).content}
                 </div>
               </div>
             </div>
 
             {/* Action Footer */}
-            <div className="p-6 bg-white border-t border-gray-200 shadow-[0_-10px_30px_rgba(0,0,0,0.02)]">
+            <div className="p-4 sm:p-6 bg-white border-t border-gray-200 shadow-[0_-10px_30px_rgba(0,0,0,0.02)] shrink-0">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                {/* Points Input (Only for Achievements) */}
+                {/* Points Input */}
                 <div className="w-full sm:w-auto">
                   {!selectedSub.targetPunishment ? (
-                    <div className="flex items-center gap-3 bg-emerald-50 p-2 pl-4 rounded-xl border border-emerald-200">
-                      <label className="text-sm font-bold text-emerald-800 whitespace-nowrap">
+                    <div className="flex items-center justify-between sm:justify-start gap-3 bg-emerald-50 p-2 sm:pl-4 rounded-xl border border-emerald-200 w-full">
+                      <label className="text-sm font-bold text-emerald-800 pl-2 sm:pl-0">
                         Award Points:
                       </label>
                       <input
                         type="number"
                         min="1"
-                        max="20" /* 🚀 Added max attribute for UI safety */
+                        max="20"
                         value={pointsToAward}
                         onChange={(e) => setPointsToAward(e.target.value)}
                         className="w-20 p-2 text-center text-black font-bold border border-emerald-300 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500"
                       />
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-500 italic">
-                      Approving this will clear the student's active punishment.
+                    <p className="text-sm text-gray-500 italic text-center sm:text-left">
+                      Approving this clears the active punishment.
                     </p>
                   )}
                 </div>
@@ -327,17 +352,17 @@ export default function VerificationInboxPage() {
                   <button
                     disabled={isProcessing}
                     onClick={() => handleAction("REJECTED")}
-                    className="flex-1 sm:flex-none px-6 py-3 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex-1 sm:flex-none px-4 sm:px-6 py-3 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <XCircle size={18} /> Reject
                   </button>
                   <button
                     disabled={isProcessing}
                     onClick={() => handleAction("APPROVED")}
-                    className="flex-1 sm:flex-none px-8 py-3 bg-[#004643] text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-[#003634] transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex-1 sm:flex-none px-4 sm:px-8 py-3 bg-[#004643] text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-[#003634] transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    <CheckCircle2 size={18} />{" "}
-                    {isProcessing ? "Processing..." : "Approve"}
+                    <CheckCircle2 size={18} />
+                    {isProcessing ? "Wait..." : "Approve"}
                   </button>
                 </div>
               </div>
