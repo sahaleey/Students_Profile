@@ -202,6 +202,8 @@ export default function ManageUsers() {
                 <option value="admin">Admins</option>
                 <option value="staff">Staff</option>
                 <option value="usthad">Usthads</option>
+                <option value="hisan">HISAN</option>
+                <option value="subwing">SUBWING</option>
                 <option value="student">Students</option>
                 <option value="parent">Parents</option>
               </select>
