@@ -10,10 +10,10 @@ import {
   ArrowLeft,
   UserPlus,
   Medal,
-  ChevronLeft, // 🚀 Added
-  ChevronRight, // 🚀 Added
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import toast from "react-hot-toast"; // 🚀 Added for premium notifications
+import toast from "react-hot-toast";
 
 interface Student {
   id: string;
@@ -45,14 +45,15 @@ export default function SubWingResultsPage() {
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Dynamic array of winners!
   const [winners, setWinners] = useState<Winner[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // 🚀 Pagination States
   const [currentProgramPage, setCurrentProgramPage] = useState(1);
   const [currentStudentPage, setCurrentStudentPage] = useState(1);
-  const ITEMS_PER_PAGE = 7; // Fits well within the left column
+  const ITEMS_PER_PAGE = 7;
+
+  // 🚀 NEW: The maximum points an admin can award per winner
+  const MAX_POINTS = 20;
 
   const getToken = () => localStorage.getItem("token");
 
@@ -76,7 +77,6 @@ export default function SubWingResultsPage() {
     fetchData();
   }, []);
 
-  // 🚀 Reset Pagination on search or step change
   useEffect(() => {
     setCurrentProgramPage(1);
     setCurrentStudentPage(1);
@@ -124,13 +124,11 @@ export default function SubWingResultsPage() {
   };
 
   const handleAddWinner = (student: Student) => {
-    // Prevent adding the same student twice
     if (winners.some((w) => w.student.id === student.id)) return;
 
-    // Default defaults
     setWinners([
       ...winners,
-      { student: student, rank: "1st", grade: "A", points: 50 },
+      { student: student, rank: "1st", grade: "A", points: 10 },
     ]);
   };
 
@@ -144,14 +142,24 @@ export default function SubWingResultsPage() {
     value: string | number,
   ) => {
     const newWinners = [...winners];
+
     if (field === "points") {
-      newWinners[index].points =
+      let parsedPoints =
         typeof value === "string" ? parseInt(value, 10) : value;
+
+      // 🚀 NEW: Strict Point Limit Validation
+      if (!isNaN(parsedPoints) && parsedPoints > MAX_POINTS) {
+        toast.error(`Maximum ${MAX_POINTS} points allowed per winner!`);
+        parsedPoints = MAX_POINTS; // Auto-correct to max
+      }
+
+      newWinners[index].points = isNaN(parsedPoints) ? "" : parsedPoints;
     } else if (field === "rank" || field === "grade") {
       (newWinners[index][
         field as keyof Omit<Winner, "student" | "points">
       ] as string) = String(value);
     }
+
     setWinners(newWinners);
   };
 
@@ -161,9 +169,20 @@ export default function SubWingResultsPage() {
       toast.error("Please select a program and at least one winner.");
       return;
     }
-    if (winners.some((w) => !w.points)) {
-      toast.error("Please assign points to all winners.");
-      return;
+
+    // 🚀 NEW: Final validation guard before submitting
+    for (const w of winners) {
+      const pts = Number(w.points);
+      if (!pts || pts < 1) {
+        toast.error(`Please assign valid points to ${w.student.fullName}.`);
+        return;
+      }
+      if (pts > MAX_POINTS) {
+        toast.error(
+          `${w.student.fullName} exceeds the maximum ${MAX_POINTS} points limit.`,
+        );
+        return;
+      }
     }
 
     const toastId = toast.loading("Publishing results...");
@@ -551,6 +570,7 @@ export default function SubWingResultsPage() {
                               type="number"
                               required
                               min="1"
+                              max={MAX_POINTS}
                               value={winner.points}
                               onChange={(e) =>
                                 handleWinnerChange(
