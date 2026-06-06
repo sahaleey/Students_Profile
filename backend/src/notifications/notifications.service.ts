@@ -29,22 +29,37 @@ export class NotificationsService {
     });
     const savedNotification = await this.notifRepo.save(notification);
     try {
-      // Find the user to see if they have enabled device notifications
       const user = await this.userRepo.findOne({
         where: { id: data.recipientId },
       });
 
       if (user && user.fcmToken) {
-        // Send the payload to Google's Firebase Servers
         await admin.messaging().send({
           token: user.fcmToken,
           notification: {
             title: data.title,
             body: data.message,
           },
+          android: {
+            priority: 'high',
+            notification: {
+              sound: 'default',
+              vibrateTimingsMillis: [300, 150, 300, 150, 500],
+              defaultVibrateTimings: false,
+            },
+          },
+
+          apns: {
+            payload: {
+              aps: {
+                sound: 'default',
+                badge: 1,
+              },
+            },
+          },
           webpush: {
             notification: {
-              icon: '/icon-192.png', // Ensure this image exists in your frontend public folder
+              icon: '/icon-192.png',
               badge: '/icon-192.png',
             },
             fcmOptions: {
