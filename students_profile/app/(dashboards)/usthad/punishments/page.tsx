@@ -11,8 +11,9 @@ import {
   Trash2,
   Coins,
   ShieldAlert,
-  ChevronLeft, // 🚀 Added
-  ChevronRight, // 🚀 Added
+  ChevronLeft,
+  ChevronRight,
+  Clock,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -40,6 +41,7 @@ interface Punishment {
   category: string;
   description: string;
   status: "ACTIVE" | "RESOLVED";
+  createdAt: string;
 }
 
 export default function PunishmentsPage() {
@@ -48,16 +50,13 @@ export default function PunishmentsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [actionType, setActionType] = useState("PUNISHMENT");
 
-  // 🚀 Added Pagination States
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
 
-  // API States
   const [rawStudents, setRawStudents] = useState<RawStudent[]>([]);
   const [punishments, setPunishments] = useState<Punishment[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Form State
   const [formData, setFormData] = useState({
     title: "",
     category: "Public Behavior",
@@ -66,11 +65,9 @@ export default function PunishmentsPage() {
 
   const getToken = () => localStorage.getItem("token");
 
-  // 1. FETCH DATA ON LOAD
   const fetchData = async () => {
     try {
       const token = getToken();
-      // Fetch Students
       const studentRes = await fetch(
         "https://students-profile.onrender.com/usthad/students",
         {
@@ -79,7 +76,6 @@ export default function PunishmentsPage() {
       );
       if (studentRes.ok) setRawStudents(await studentRes.json());
 
-      // Fetch Punishments History
       const punishRes = await fetch(
         "https://students-profile.onrender.com/usthad/punishments",
         {
@@ -96,12 +92,10 @@ export default function PunishmentsPage() {
     fetchData();
   }, []);
 
-  // 🚀 Reset to Page 1 whenever search changes
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  // 2. FORMAT, FILTER & PAGINATE STUDENTS
   const flatStudents: Student[] = rawStudents.map((s) => ({
     id: s.id,
     name: s.fullName,
@@ -122,7 +116,6 @@ export default function PunishmentsPage() {
     currentPage * ITEMS_PER_PAGE,
   );
 
-  // 3. SUBMIT PUNISHMENT TO BACKEND
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedStudent) return;
@@ -147,10 +140,9 @@ export default function PunishmentsPage() {
 
       if (!response.ok) throw new Error("Failed to assign punishment");
 
-      // Success! Reset everything and refresh the history list
       setFormData({ title: "", category: "Public Behavior", description: "" });
       resetWizard();
-      await fetchData(); // Refresh the right column!
+      await fetchData();
       toast.success("Action applied successfully!");
     } catch (error) {
       toast.error("Error assigning action. Please try again.");
@@ -168,7 +160,6 @@ export default function PunishmentsPage() {
       return;
     }
 
-    // Optimistic UI Update: Instantly remove it from the screen
     setPunishments((prev) => prev.filter((p) => p.id !== punishmentId));
 
     try {
@@ -186,11 +177,10 @@ export default function PunishmentsPage() {
       toast.success("Record deleted.");
     } catch (error) {
       toast.error("Error removing record. Refreshing list.");
-      await fetchData(); // Put it back on the screen if the server failed
+      await fetchData();
     }
   };
 
-  // Handlers
   const handleSelectStudent = (student: Student) => {
     setSelectedStudent(student);
     setStep(2);
@@ -258,7 +248,6 @@ export default function PunishmentsPage() {
                 />
               </div>
 
-              {/* 🚀 Render Paginated Students */}
               <div className="flex-1 overflow-y-auto space-y-2 min-h-[350px]">
                 {paginatedStudents.length > 0 ? (
                   paginatedStudents.map((student) => (
@@ -293,7 +282,6 @@ export default function PunishmentsPage() {
                 )}
               </div>
 
-              {/* 🚀 Pagination Controls */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                   <button
@@ -472,9 +460,22 @@ export default function PunishmentsPage() {
                   <p className="font-bold text-gray-800 capitalize">
                     {p.student?.fullName || "Unknown Student"}
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">{p.title}</p>
+                  <p className="text-sm text-gray-600 mt-0.5">{p.title}</p>
+
+                  {/* 🚀 THE NEW TIMESTAMP */}
+                  <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1.5">
+                    <Clock size={12} className="text-gray-300" />
+                    Assigned on:{" "}
+                    {p.createdAt
+                      ? new Date(p.createdAt).toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : "Unknown Date"}
+                  </p>
                 </div>
-                {/* 🚀 3. THE ACTION BUTTONS */}
+
                 <div className="flex items-center gap-3">
                   <span
                     className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${

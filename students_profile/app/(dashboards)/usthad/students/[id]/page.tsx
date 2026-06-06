@@ -11,6 +11,7 @@ import {
   Award,
   Target,
   Activity,
+  Clock,
 } from "lucide-react";
 
 export default function StudentPerformanceProfile() {
@@ -91,7 +92,7 @@ export default function StudentPerformanceProfile() {
         </div>
       </div>
 
-      {/* 🚀 THE RED/GREEN CATEGORY STATUSES */}
+      {/* DEPARTMENTAL STATUSES */}
       <div>
         <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
           <Activity size={20} className="text-purple-600" /> Departmental
@@ -163,9 +164,27 @@ export default function StudentPerformanceProfile() {
                     <p className="text-sm text-gray-600 mt-1">
                       {p.description}
                     </p>
-                    <p className="text-xs text-red-600 font-semibold mt-3">
-                      Assigned by: {p.assignedBy?.fullName || "System"}
-                    </p>
+
+                    {/* 🚀 THE NEW TIMESTAMP & ASSIGNED BY SECTION */}
+                    <div className="flex items-center gap-3 mt-4 text-xs font-semibold">
+                      <p className="text-red-600">
+                        Assigned by: {p.assignedBy?.fullName || "System"}
+                      </p>
+                      <span className="h-3 w-px bg-red-200"></span>
+                      <p className="text-red-400 font-medium flex items-center gap-1">
+                        <Clock size={12} />
+                        {p.createdAt
+                          ? new Date(p.createdAt).toLocaleDateString(
+                              undefined,
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              },
+                            )
+                          : "Unknown Date"}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
