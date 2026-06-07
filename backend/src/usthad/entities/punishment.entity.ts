@@ -5,6 +5,7 @@ import {
   ManyToOne,
   CreateDateColumn,
   JoinColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
@@ -43,9 +44,13 @@ export class Punishment {
 
   @CreateDateColumn()
   createdAt!: Date;
+
   @Column({ default: 'PUNISHMENT' })
   actionType!: string;
 
   @Column({ default: false })
   isEscalated!: boolean;
+
+  @DeleteDateColumn()
+  deletedAt?: Date;
 }

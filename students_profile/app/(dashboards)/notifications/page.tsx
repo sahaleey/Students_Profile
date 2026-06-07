@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import SkeletonCard from "@/components/shared/SkeletonCard";
 
 interface NotificationRecord {
   id: string;
@@ -155,12 +156,28 @@ export default function NotificationsPage() {
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
-  if (isLoading) {
+  const SkeletonRow = () => {
     return (
-      <div className="flex justify-center items-center h-[60vh] text-[#004643] font-bold animate-pulse">
-        Loading Notifications...
+      <div className="p-5 flex items-start gap-4 animate-pulse bg-white border-b border-gray-100">
+        {/* Icon Circle */}
+        <div className="shrink-0 w-10 h-10 rounded-full bg-gray-200"></div>
+
+        {/* Text Content */}
+        <div className="flex-1 space-y-3 py-1">
+          <div className="flex justify-between">
+            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-3 bg-gray-200 rounded w-16"></div>
+          </div>
+          <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+        </div>
+
+        {/* Right Action Button */}
+        <div className="shrink-0 w-8 h-8 rounded-full bg-gray-200"></div>
       </div>
     );
+  };
+  if (isLoading) {
+    return <>{SkeletonRow()}</>;
   }
 
   return (
@@ -218,13 +235,20 @@ export default function NotificationsPage() {
         </div>
 
         <div className="divide-y divide-gray-100">
-          {notifications.length === 0 ? (
+          {isLoading ? (
+            <>
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+            </>
+          ) : notifications.length === 0 ? (
             <div className="p-12 text-center text-gray-400">
               <Bell size={48} className="mx-auto mb-4 opacity-20" />
               <p className="font-medium text-lg text-gray-600">
                 You're all caught up!
               </p>
-              <p className="text-sm mt-1">No notifications to display.</p>
             </div>
           ) : (
             notifications.map((notif) => (

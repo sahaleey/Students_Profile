@@ -5,6 +5,7 @@ import {
   ManyToOne,
   CreateDateColumn,
   JoinColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 
@@ -34,4 +35,7 @@ export class Achievement {
 
   @Column({ default: false })
   isSpecialHighlight!: boolean;
+
+  @DeleteDateColumn()
+  deletedAt?: Date;
 }

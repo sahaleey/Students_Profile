@@ -318,17 +318,20 @@ export class UsthadService {
     return savedSubmission;
   }
   // Remove a punishment record (for mistakes or resolved issues)
-  async removePunishment(punishmentId: string) {
+  async removePunishment(id: string, usthadId: string) {
     const punishment = await this.punishmentRepo.findOne({
-      where: { id: punishmentId },
+      where: { id, assignedBy: { id: usthadId } },
     });
 
     if (!punishment) {
-      throw new NotFoundException('Punishment not found');
+      throw new NotFoundException(
+        'Punishment not found or not assigned by you',
+      );
     }
 
-    // This completely removes the row from the database table
-    return this.punishmentRepo.remove(punishment);
+    await this.punishmentRepo.softRemove(punishment);
+
+    return { message: 'Punishment successfully archived (soft deleted)' };
   }
   // For create Attachment
   async createAttachmentOnBehalf(
@@ -345,8 +348,7 @@ export class UsthadService {
       targetPunishment: { id: data.punishmentId },
       purpose: 'ATTACHMENT',
       title: data.workTitle,
-      status: SubmissionStatus.APPROVED, // If Usthad creates it, it's instantly approved!
-      // verifiedBy: { id: usthadId } // Optional
+      status: SubmissionStatus.APPROVED,
     });
 
     await this.submissionRepo.save(submission);
@@ -384,13 +386,12 @@ export class UsthadService {
     return submission;
   }
 
-  // For Remove Achievement (if needed, e.g., for mistakes)
-  async removeAchievement(achievementId: string) {
+  async removeAchievement(id: string, usthadId: string) {
     const achievement = await this.achievementRepo.findOne({
-      where: { id: achievementId },
+      where: { id, awardedBy: { id: usthadId } },
     });
     if (!achievement) throw new NotFoundException('Achievement not found');
-    return this.achievementRepo.remove(achievement);
+    return this.achievementRepo.softRemove(achievement);
   }
 
   // Student list with computed points for current active month and lifetime
