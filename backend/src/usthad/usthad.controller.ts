@@ -111,8 +111,11 @@ export class UsthadController {
   }
   // Delete a punishment record Route
   @Delete('punishments/:id')
-  removePunishment(@Param('id') id: string) {
-    return this.usthadService.removePunishment(id);
+  removePunishment(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ) {
+    return this.usthadService.removePunishment(id, req.user.userId);
   }
   //For create and Get attachment on behalf of student
   // Add this to UsthadController
@@ -151,8 +154,11 @@ export class UsthadController {
   }
 
   @Delete('achievements/:id')
-  removeAchievement(@Param('id') id: string) {
-    return this.usthadService.removeAchievement(id);
+  removeAchievement(
+    @Request() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ) {
+    return this.usthadService.removeAchievement(id, req.user.userId);
   }
 
   @Post('submissions')

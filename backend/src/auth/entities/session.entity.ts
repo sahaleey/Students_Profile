@@ -21,6 +21,9 @@ export class Session {
   @Column()
   ipAddress!: string;
 
+  @Column({ nullable: true })
+  fingerprint!: string;
+
   @Column({ default: true })
   isActive!: boolean;
 

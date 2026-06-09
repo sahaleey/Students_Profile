@@ -13,7 +13,7 @@ import {
   Ip,
   Headers,
 } from '@nestjs/common';
-import { Request } from 'express';
+import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Roles } from './decorators/roles.decorator';
@@ -45,9 +45,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Post('login')
   async login(
+    @Req() req: Request,
     @Body() loginDto: { username: string; password: string },
-    @Ip() ip: string, // 🚀 Automatically grabs the user's IP
-    @Headers('user-agent') userAgent: string, // 🚀 Grabs device info
+    @Headers('user-agent') userAgent: string,
   ) {
     const user = (await this.authService.validateUser(
       loginDto.username,
@@ -58,8 +58,15 @@ export class AuthController {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Pass the IP and UserAgent down to the service!
-    return this.authService.login(user, ip, userAgent);
+    const rawIp =
+      req.headers['x-forwarded-for'] ||
+      req.socket.remoteAddress ||
+      'Unknown IP';
+
+    // Ensure we send a string
+    const ipStr = Array.isArray(rawIp) ? rawIp[0] : rawIp;
+
+    return this.authService.login(user, ipStr, userAgent);
   }
 
   @UseGuards(JwtAuthGuard)
