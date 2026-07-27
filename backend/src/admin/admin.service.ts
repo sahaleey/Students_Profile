@@ -251,7 +251,7 @@ export class AdminService {
   }) {
     // 1. Find the student
     const student = await this.usersRepository.findOne({
-      where: { id: data.studentId },
+      where: { username: data.studentId, role: Role.STUDENT },
     });
     if (!student) throw new Error('Student not found');
 
