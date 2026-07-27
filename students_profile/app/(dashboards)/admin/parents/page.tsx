@@ -1,21 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Users,
   Search,
   Phone,
   UserPlus,
   GraduationCap,
-  Shield,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import LinkParentTool from "./LinkParentTool"; // Assuming you saved the component we built earlier in the same folder!
+import LinkParentTool from "./LinkParentTool";
 
 export default function AdminParentsPage() {
   const [parents, setParents] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClass, setSelectedClass] = useState("All");
   const [isLoading, setIsLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const getToken = () => localStorage.getItem("token");
 
@@ -40,14 +47,48 @@ export default function AdminParentsPage() {
     fetchParents();
   }, []);
 
-  // Filter parents based on search (by parent name, phone, or child name)
-  const filteredParents = parents.filter(
-    (parent) =>
-      parent.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      parent.username.includes(searchTerm) ||
-      parent.children?.some((child: any) =>
-        child.fullName.toLowerCase().includes(searchTerm.toLowerCase()),
-      ),
+  // Extract unique classes from all children for the filter dropdown
+  const availableClasses = useMemo(() => {
+    const classes = new Set<string>();
+    parents.forEach((parent) => {
+      parent.children?.forEach((child: any) => {
+        if (child.class) classes.add(child.class);
+      });
+    });
+    return ["All", ...Array.from(classes).sort()];
+  }, [parents]);
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedClass]);
+
+  // Apply Search and Class Filter
+  const filteredParents = useMemo(() => {
+    return parents.filter((parent) => {
+      // 1. Check Search Term
+      const matchesSearch =
+        parent.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        parent.username.includes(searchTerm) ||
+        parent.children?.some((child: any) =>
+          child.fullName.toLowerCase().includes(searchTerm.toLowerCase()),
+        );
+
+      // 2. Check Class Filter
+      const matchesClass =
+        selectedClass === "All" ||
+        parent.children?.some((child: any) => child.class === selectedClass);
+
+      return matchesSearch && matchesClass;
+    });
+  }, [parents, searchTerm, selectedClass]);
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredParents.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedParents = filteredParents.slice(
+    startIndex,
+    startIndex + itemsPerPage,
   );
 
   return (
@@ -80,11 +121,9 @@ export default function AdminParentsPage() {
       {/* The Link Parent Tool (Toggled) */}
       {showAddForm && (
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-emerald-100 animate-slideIn">
-          {/* Note: I'm assuming you saved the LinkParentTool component in a separate file. 
-              If you pasted it directly in here, just render the JSX instead! */}
           <LinkParentTool
             onSuccess={() => {
-              fetchParents(); // Refresh list after adding!
+              fetchParents();
               setShowAddForm(false);
             }}
           />
@@ -93,9 +132,10 @@ export default function AdminParentsPage() {
 
       {/* Parent Directory List */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        {/* Search Bar */}
-        <div className="p-6 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-xl">
+        {/* Search & Filter Bar */}
+        <div className="p-6 border-b border-gray-200 bg-gray-50 flex flex-col md:flex-row items-center justify-between gap-4">
+          {/* Search Input */}
+          <div className="relative flex-1 w-full max-w-xl">
             <Search
               className="absolute left-4 top-3.5 text-gray-400"
               size={20}
@@ -108,8 +148,31 @@ export default function AdminParentsPage() {
               className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-black font-medium"
             />
           </div>
-          <div className="text-sm font-bold text-gray-500 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
-            Total Parents: {parents.length}
+
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            {/* Class Filter Dropdown */}
+            <div className="relative flex-1 md:w-48">
+              <Filter
+                className="absolute left-4 top-3.5 text-gray-400"
+                size={18}
+              />
+              <select
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                className="w-full pl-11 pr-8 py-3 bg-white border border-gray-300 rounded-xl outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition-all text-black font-medium appearance-none cursor-pointer"
+              >
+                {availableClasses.map((cls) => (
+                  <option key={cls} value={cls}>
+                    {cls === "All" ? "All Classes" : `Class ${cls}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Total Count Badge */}
+            <div className="text-sm font-bold text-gray-500 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm whitespace-nowrap">
+              Total: {filteredParents.length}
+            </div>
           </div>
         </div>
 
@@ -142,14 +205,14 @@ export default function AdminParentsPage() {
                     Loading directory...
                   </td>
                 </tr>
-              ) : filteredParents.length === 0 ? (
+              ) : paginatedParents.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-12 text-center text-gray-400">
-                    No parent accounts found.
+                    No parent accounts found matching your filters.
                   </td>
                 </tr>
               ) : (
-                filteredParents.map((parent) => (
+                paginatedParents.map((parent) => (
                   <tr
                     key={parent.id}
                     className="hover:bg-gray-50 transition-colors"
@@ -223,6 +286,63 @@ export default function AdminParentsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Controls */}
+        {!isLoading && totalPages > 1 && (
+          <div className="p-4 border-t border-gray-200 bg-white flex items-center justify-between">
+            <span className="text-sm text-gray-500 font-medium">
+              Showing{" "}
+              <span className="font-bold text-gray-900">{startIndex + 1}</span>{" "}
+              to{" "}
+              <span className="font-bold text-gray-900">
+                {Math.min(startIndex + itemsPerPage, filteredParents.length)}
+              </span>{" "}
+              of{" "}
+              <span className="font-bold text-gray-900">
+                {filteredParents.length}
+              </span>{" "}
+              parents
+            </span>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft size={18} />
+              </button>
+
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-sm font-bold transition-colors ${
+                        currentPage === page
+                          ? "bg-emerald-600 text-white"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ),
+                )}
+              </div>
+
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <style jsx>{`
