@@ -132,7 +132,7 @@ export class UsersService implements OnModuleInit {
 
       const user = this.usersRepository.create({
         fullName: userData.fullName,
-        username: userData.username, // Their Admission Number
+        username: userData.username,
         role: (userData.role as Role) || Role.STUDENT,
         class: userData.class ? String(userData.class) : 'Unassigned',
         passwordHash: hashedPassword,

@@ -9,13 +9,13 @@ import {
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { RolesGuard } from '../auth/guards/roles.guard'; // 🚀 Added RolesGuard
-import { Roles } from '../auth/decorators/roles.decorator'; // 🚀 Added Roles decorator
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/enums/role.enum';
 
 @Controller('admin')
-@UseGuards(JwtAuthGuard, RolesGuard) // 🚀 Enforce Role Checking globally for this controller
-@Roles(Role.ADMIN) // 🚀 Require user to be an ADMIN to use ANY of these routes
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
@@ -63,6 +63,18 @@ export class AdminController {
     },
   ) {
     return this.adminService.createParentAccount(body);
+  }
+
+  @Post('users/create-parents/bulk')
+  async bulkCreateParents(
+    @Body()
+    body: {
+      studentId: string;
+      parentName: string;
+      parentPhone: string;
+    }[],
+  ) {
+    return this.adminService.bulkCreateParents(body);
   }
 
   // ==========================================

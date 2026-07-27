@@ -251,23 +251,26 @@ export class AdminService {
   }) {
     // 1. Find the student
     const student = await this.usersRepository.findOne({
-      where: { id: data.studentId },
+      where: {
+        username: data.studentId,
+        role: Role.STUDENT,
+      },
     });
     if (!student) throw new Error('Student not found');
 
-    // 2. Check if this parent phone number already exists (maybe they have 2 kids in the school!)
+    // 2. Check if this parent phone number already exists
     let parent = await this.usersRepository.findOne({
       where: { username: data.parentPhone, role: Role.PARENT },
     });
 
     if (!parent) {
       // 3. If parent doesn't exist, create a new account for them
-      const hashedPassword = await bcrypt.hash('parent123', 10); // Default password for all parents
+      const hashedPassword = await bcrypt.hash('parent123', 10);
 
       parent = this.usersRepository.create({
         fullName: data.parentName,
-        username: data.parentPhone, // They log in with their phone number
-        phone: data.parentPhone, // We also save it in the dedicated phone column
+        username: data.parentPhone,
+        phone: data.parentPhone,
         passwordHash: hashedPassword,
         role: Role.PARENT,
         isActive: true,
@@ -283,6 +286,47 @@ export class AdminService {
       message: 'Parent linked successfully!',
       parentLogin: data.parentPhone,
       defaultPassword: 'parent123',
+    };
+  }
+  async bulkCreateParents(
+    parents: {
+      studentId: string;
+      parentName: string;
+      parentPhone: string;
+    }[],
+  ) {
+    const results: Array<{
+      success: boolean;
+      studentId: string;
+      message?: string;
+      parentLogin?: string;
+      defaultPassword?: string;
+    }> = [];
+
+    for (const parentData of parents) {
+      try {
+        const result = await this.createParentAccount(parentData);
+
+        results.push({
+          success: true,
+          studentId: parentData.studentId,
+          ...result,
+        });
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
+        results.push({
+          success: false,
+          studentId: parentData.studentId,
+          message,
+        });
+      }
+    }
+
+    return {
+      message: 'Bulk parent import completed',
+      total: parents.length,
+      results,
     };
   }
   async getAllParents() {
