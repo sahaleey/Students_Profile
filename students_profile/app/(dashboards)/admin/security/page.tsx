@@ -10,6 +10,7 @@ import {
   Info,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import Tooltip from "@/components/shared/Tooltip";
 
 // Define the shape of our data based on the NestJS entity
 interface Session {
@@ -141,19 +142,20 @@ export default function SecurityPage() {
             account.
           </p>
         </div>
-
-        <button
-          onClick={handleRevokeOthers}
-          disabled={isRevoking || sessions.length <= 1 || isLoading}
-          className="flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isRevoking ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <LogOut className="w-4 h-4" />
-          )}
-          Log out all other devices
-        </button>
+        <Tooltip text=" Log out from all other devices" position="top">
+          <button
+            onClick={handleRevokeOthers}
+            disabled={isRevoking || sessions.length <= 1 || isLoading}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isRevoking ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <LogOut className="w-4 h-4" />
+            )}
+            Log out all other devices
+          </button>
+        </Tooltip>
       </div>
 
       {/* Sessions List */}
